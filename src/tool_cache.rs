@@ -11,7 +11,7 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use zip::ZipArchive;
 
-use crate::{github, paths};
+use crate::{artifact_choosing::platform_keywords, github, paths};
 
 fn index_file() -> PathBuf {
     let mut path = paths::base_dir();
@@ -66,8 +66,6 @@ impl ToolCache {
 
         let releases = github::get_releases(source).unwrap();
 
-        const PLATFORM: &str = "win64";
-
         // Filter down our set of releases to those that are valid versions and
         // have release assets for our current platform.
         let mut semver_releases: Vec<_> = releases
@@ -82,10 +80,11 @@ impl ToolCache {
 
                 let version = Version::parse(&release.tag_name[1..]).ok()?;
 
-                let asset_index = release
-                    .assets
-                    .iter()
-                    .position(|asset| asset.name.contains(PLATFORM))?;
+                let asset_index = release.assets.iter().position(|asset| {
+                    platform_keywords()
+                        .iter()
+                        .any(|keyword| asset.name.contains(keyword))
+                })?;
 
                 Some((version, asset_index, release))
             })

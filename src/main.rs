@@ -1,4 +1,5 @@
 mod aliaser;
+mod artifact_choosing;
 mod config;
 mod github;
 mod paths;
