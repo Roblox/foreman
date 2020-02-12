@@ -97,13 +97,15 @@ fn actual_main() -> io::Result<()> {
             }
         }
         Options::List => {
+            println!("Installed tools:");
+
             let cache = ToolCache::load().unwrap();
 
             for (tool_source, tool) in &cache.tools {
-                println!("{}", tool_source);
+                println!("  {}", tool_source);
 
                 for version in &tool.versions {
-                    println!("  - {}", version);
+                    println!("    - {}", version);
                 }
             }
         }

@@ -62,7 +62,7 @@ impl ToolCache {
     }
 
     pub fn download(source: &str, version_req: &VersionReq) -> Option<Version> {
-        log::debug!("Downloading tool {}@{}", source, version_req);
+        log::info!("Downloading {}@{}", source, version_req);
 
         let releases = github::get_releases(source).unwrap();
 
