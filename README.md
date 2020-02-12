@@ -1,44 +1,58 @@
 # Foreman
-Foreman will be a toolchain manager to help Roblox developers manage their installations of tools like [Rojo](https://github.com/rojo-rbx/rojo), [Remodel](https://github.com/rojo-rbx/remodel), [Tarmac](https://github.com/rojo-rbx/tarmac), and [Selene](https://github.com/Kampfkarren/selene).
+Foreman is a toolchain manager to help Roblox developers manage their installations of tools like [Rojo](https://github.com/rojo-rbx/rojo), [Remodel](https://github.com/rojo-rbx/remodel), [Tarmac](https://github.com/rojo-rbx/tarmac), and [Selene](https://github.com/Kampfkarren/selene).
 
 Foreman is inspired by [rustup](https://rustup.rs) and [asdf](https://github.com/asdf-vm/asdf).
 
-There's nothing usable yet, but check back soon!
+It's an early prototype, but feedback at this stage is welcome!
 
-## Usage
-To start, Foreman will be a tiny tool to download binaries from GitHub releases.
+## Setup
+You'll need to build from source for now. Foreman builds on the latest stable version of Rust, currently 1.41.0.
 
-Users will add tools globally using a command like:
+To install from the master branch, use:
 
 ```bash
-foreman install rojo-rbx/rojo
+cargo install --git https://github.com/rojo-rbx/foreman.git
 ```
 
-Foreman will download the latest release of Rojo and put it into Foreman's internal tool storage, like `~/.foreman/tools/rojo-rbx/rojo/rojo-0.6.0-alpha.1`.
+On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (`~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
 
-Foreman will also create a symlink back to itself in a path like `~/.foreman/bin/rojo`. Foreman will assume that `~/.foreman/bin` is on the user's `PATH` environment variable.
+It's recommended that you add `~/.foreman/bin` to your `PATH`.
 
-Running `rojo` at this point should act just like running Rojo itself would.
+## Usage
+Foreman downloads tools from GitHub and references them by their `user/repo` name, like `rojo-rbx/foreman`.
 
-When Foreman is run and its executable name is set to something other than `foreman`, it'll search for a configuration file like `foreman.toml`, which users can use to configure what versions of various tools to use.
+### System Tools
+To start using Foreman to manage your system's default tools, which will be used unless a project overrides them, create the file `~/.foreman/foreman.toml`.
 
-A project's `foreman.toml` file might look like this:
+A Foreman config that lists Rojo could look like:
 
 ```toml
 [tools]
-rojo = "rojo-rbx/rojo@0.5.0"
-remodel = "rojo-rbx/remodel@0.4.0"
-selene = "kampfkarren/selene@=1.0.0"
+rojo = { source = "rojo-rbx/rojo", version = "0.5.0" }
 ```
 
-Foreman will use these version ranges to ensure a compatible version of a given tool (by SemVer range) is installed. Versions specified in the project will override the versions of these tools installed on the user's machine globally.
+Run `foreman install` from any directory to have Foreman pick up and install any tools listed in your system's Foreman config.
 
-To install all the tools for a given project explicitly, users will be able to run:
+Now, if you run `rojo` inside of a directory that doesn't specify its own version of Rojo, Foreman will run the most recent 0.5.x release for you!
 
-```bash
-foreman install
+### Project Tools
+Managing a project's tools with Foreman is similar to managing system tools. Just create a `foreman.toml` file in the root of your project.
+
+A Foreman config that lists Remodel might look like this:
+
+```toml
+[tools]
+remodel = { source = "rojo-rbx/remodel", version = "0.6.1" }
 ```
 
-Foreman will warn the user if a project uses the same binary name but has a different source.
+Run `foreman install` to tell Foreman to install any new binaries from this config file.
 
-This command is not necessary if the user already has any version of any of the listed tools installed.
+When inside this directory, the `remodel` command will run the latest 0.6.x release of Remodel installed on your system.
+
+## Troubleshooting
+Foreman is a super early tool and has problems. Check out [the issue tracker](https://github.com/rojo-rbx/foreman/issues) for known bugs.
+
+If you have issues with configuration, try deleting `~/.foreman` to start from scratch. This directory contains all of Foreman's installed tools and configuration.
+
+## License
+Foreman is available under the MIT license. See [LICENSE.txt](LICENSE.txt) or <https://opensource.org/licenses/MIT> for details.
