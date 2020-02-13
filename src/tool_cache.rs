@@ -73,12 +73,13 @@ impl ToolCache {
             .filter_map(|release| {
                 log::trace!("Evaluating tag {}", release.tag_name);
 
-                if !release.tag_name.starts_with('v') {
-                    log::trace!("Not a version tag, skipping...");
-                    return None;
-                }
+                let version = Version::parse(&release.tag_name).ok().or_else(|| {
+                    if !release.tag_name.starts_with('v') {
+                        return None;
+                    }
 
-                let version = Version::parse(&release.tag_name[1..]).ok()?;
+                    Version::parse(&release.tag_name[1..]).ok()
+                })?;
 
                 let asset_index = release.assets.iter().position(|asset| {
                     platform_keywords()
