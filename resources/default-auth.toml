@@ -1,0 +1,10 @@
+# This is where Foreman stores authentication information for sources.
+
+# For authenticating with GitHub.com, put a personal access token here under the
+# `github` key. This is useful if you hit GitHub API rate limits or if you need
+# to access private tools.
+
+# In order to use sources from private repositories, this token will need "repo"
+# permissions granted to it and potentially SSO authorization.
+
+# github = "<PAC HERE>"

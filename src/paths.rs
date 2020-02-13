@@ -3,6 +3,7 @@
 use std::{fs, io, path::PathBuf};
 
 static DEFAULT_USER_CONFIG: &str = include_str!("../resources/default-foreman.toml");
+static DEFAULT_AUTH_STORE: &str = include_str!("../resources/default-auth.toml");
 
 pub fn base_dir() -> PathBuf {
     let mut dir = dirs::home_dir().unwrap();
@@ -22,6 +23,12 @@ pub fn bin_dir() -> PathBuf {
     dir
 }
 
+pub fn auth_store() -> PathBuf {
+    let mut path = base_dir();
+    path.push("auth.toml");
+    path
+}
+
 pub fn user_config() -> PathBuf {
     let mut path = base_dir();
     path.push("foreman.toml");
@@ -37,6 +44,15 @@ pub fn create() -> io::Result<()> {
     if let Err(err) = fs::metadata(&config) {
         if err.kind() == io::ErrorKind::NotFound {
             fs::write(&config, DEFAULT_USER_CONFIG)?;
+        } else {
+            return Err(err);
+        }
+    }
+
+    let auth = auth_store();
+    if let Err(err) = fs::metadata(&auth) {
+        if err.kind() == io::ErrorKind::NotFound {
+            fs::write(&auth, DEFAULT_AUTH_STORE)?;
         } else {
             return Err(err);
         }

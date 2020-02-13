@@ -102,7 +102,7 @@ impl ToolCache {
         if let Some((version, asset_index, release)) = matching_release {
             log::trace!("Picked version {}", version);
 
-            let url = &release.assets[asset_index].browser_download_url;
+            let url = &release.assets[asset_index].url;
             let mut buffer = Vec::new();
             github::download_asset(url, &mut buffer).unwrap();
 
