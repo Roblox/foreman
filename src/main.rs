@@ -7,7 +7,7 @@ mod github;
 mod paths;
 mod tool_cache;
 
-use std::{env, error::Error, io, path::Path};
+use std::{env, error::Error, io};
 
 use structopt::StructOpt;
 
@@ -20,19 +20,16 @@ struct ToolInvocation {
 }
 
 impl ToolInvocation {
-    fn from_args() -> Option<Self> {
-        let mut all_args = env::args();
-
-        let app_path = all_args.next()?;
-        let as_path = Path::new(&app_path);
-        let name = as_path.file_stem()?.to_str()?.to_owned();
+    fn from_env() -> Option<Self> {
+        let app_path = env::current_exe().unwrap();
+        let name = app_path.file_stem()?.to_str()?.to_owned();
 
         // That's us!
         if name == "foreman" {
             return None;
         }
 
-        let args = all_args.collect();
+        let args = env::args().skip(1).collect();
 
         Some(Self { name, args })
     }
@@ -48,7 +45,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     paths::create()?;
 
-    if let Some(invocation) = ToolInvocation::from_args() {
+    if let Some(invocation) = ToolInvocation::from_env() {
         let config = ConfigFile::aggregate()?;
 
         if let Some(tool_spec) = config.tools.get(&invocation.name) {
