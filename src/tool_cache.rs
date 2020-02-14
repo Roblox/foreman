@@ -152,7 +152,7 @@ impl ToolCache {
     }
 
     fn save(&self) -> io::Result<()> {
-        let serialized = serde_json::to_string(self).unwrap();
+        let serialized = serde_json::to_string_pretty(self).unwrap();
         fs::write(index_file(), serialized)
     }
 }
