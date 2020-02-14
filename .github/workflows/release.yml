@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    tags: ["*"]
+
+jobs:
+  windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build release binary
+      run: cargo build --verbose --locked --release
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: foreman-win64
+        path: target/release/foreman.exe
+
+  macos:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Rust
+      run: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+
+    - name: Build release binary
+      run: |
+        source $HOME/.cargo/env
+        cargo build --verbose --locked --release
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: foreman-macos
+        path: target/release/foreman
+
+  linux:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Build
+      run: cargo build --locked --verbose --release
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: foreman-linux
+        path: target/release/foreman
