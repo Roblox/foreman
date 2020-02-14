@@ -1,9 +1,6 @@
-use std::{
-    env::{self, consts::EXE_SUFFIX},
-    fs,
-};
+use std::env::{self, consts::EXE_SUFFIX};
 
-use crate::paths;
+use crate::{fs, paths};
 
 pub fn add_self_alias(name: &str) {
     let foreman_path = env::args().next().unwrap();

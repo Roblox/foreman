@@ -1,9 +1,9 @@
-use std::{collections::HashMap, env, fs, io};
+use std::{collections::HashMap, env, io};
 
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
-use crate::paths;
+use crate::{fs, paths};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigFile {

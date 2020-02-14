@@ -1,7 +1,11 @@
 [package]
 name = "foreman"
+description = "Toolchain manager for simple binary tools"
 version = "0.1.0"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
+license = "MIT"
+homepage = "https://github.com/rojo-rbx/foreman#readme"
+repository = "https://github.com/rojo-rbx/foreman"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

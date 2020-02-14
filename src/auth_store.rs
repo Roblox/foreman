@@ -1,8 +1,8 @@
-use std::{fs, io};
+use std::io;
 
 use serde::{Deserialize, Serialize};
 
-use crate::paths;
+use crate::{fs, paths};
 
 /// Contains stored user tokens that Foreman can use to download tools.
 #[derive(Debug, Default, Serialize, Deserialize)]

@@ -1,7 +1,6 @@
 use std::{
     collections::{BTreeSet, HashMap},
     env::consts::EXE_SUFFIX,
-    fs::{self, File},
     io::{self, BufWriter, Cursor},
     path::PathBuf,
     process,
@@ -11,7 +10,11 @@ use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 use zip::ZipArchive;
 
-use crate::{artifact_choosing::platform_keywords, github, paths};
+use crate::{
+    artifact_choosing::platform_keywords,
+    fs::{self, File},
+    github, paths,
+};
 
 fn index_file() -> PathBuf {
     let mut path = paths::base_dir();

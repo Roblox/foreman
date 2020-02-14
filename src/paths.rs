@@ -1,6 +1,8 @@
 //! Contains all of the paths that Foreman needs to deal with.
 
-use std::{fs, io, path::PathBuf};
+use std::{io, path::PathBuf};
+
+use crate::fs;
 
 static DEFAULT_USER_CONFIG: &str = include_str!("../resources/default-foreman.toml");
 static DEFAULT_AUTH_STORE: &str = include_str!("../resources/default-auth.toml");

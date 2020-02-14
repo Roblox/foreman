@@ -2,6 +2,7 @@ mod aliaser;
 mod artifact_choosing;
 mod auth_store;
 mod config;
+mod fs;
 mod github;
 mod paths;
 mod tool_cache;
@@ -77,7 +78,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 #[derive(Debug, StructOpt)]
-enum Options {
+struct Options {
+    #[structopt(subcommand)]
+    subcommand: Subcommand,
+}
+
+#[derive(Debug, StructOpt)]
+enum Subcommand {
     /// Install tools defined by foreman.toml.
     Install,
 
@@ -88,8 +95,8 @@ enum Options {
 fn actual_main() -> io::Result<()> {
     let options = Options::from_args();
 
-    match options {
-        Options::Install => {
+    match options.subcommand {
+        Subcommand::Install => {
             let config = ConfigFile::aggregate()?;
 
             log::trace!("Installing from gathered config: {:#?}", config);
@@ -99,7 +106,7 @@ fn actual_main() -> io::Result<()> {
                 add_self_alias(tool_alias);
             }
         }
-        Options::List => {
+        Subcommand::List => {
             println!("Installed tools:");
 
             let cache = ToolCache::load().unwrap();
