@@ -53,6 +53,15 @@ pub fn metadata<P: AsRef<Path>>(path: P) -> Result<fs::Metadata> {
     fs::metadata(path).map_err(|source| Error::new(source, path))
 }
 
+pub use fs::Permissions;
+
+/// A wrapper around std::fs::set_permissions
+pub fn set_permissions<P: AsRef<Path>>(path: P, permissions: Permissions) -> Result<()> {
+    let path = path.as_ref();
+
+    fs::set_permissions(path, permissions).map_err(|source| Error::new(source, path))
+}
+
 /// A wrapper around std::fs::File that contains file path information in error
 /// cases.
 #[derive(Debug)]

@@ -117,8 +117,19 @@ impl ToolCache {
             let exe_name = tool_identifier_to_exe_name(source, &version);
             tool_path.push(exe_name);
 
-            let mut output = BufWriter::new(File::create(tool_path).unwrap());
+            let mut output = BufWriter::new(File::create(&tool_path).unwrap());
             io::copy(&mut file, &mut output).unwrap();
+
+            // On Unix systems, we need to preserve permissions from the archive
+            // like executability.
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+
+                if let Some(mode) = file.unix_mode() {
+                    fs::set_permissions(&tool_path, fs::Permissions::from_mode(mode)).unwrap();
+                }
+            }
 
             log::trace!("Updating tool cache");
             let mut cache = Self::load().unwrap();
