@@ -12,6 +12,7 @@ use zip::ZipArchive;
 
 use crate::{
     artifact_choosing::platform_keywords,
+    ci_string::CiString,
     fs::{self, File},
     github, paths,
 };
@@ -25,7 +26,7 @@ fn index_file() -> PathBuf {
 /// Contains the current state of all of the tools that Foreman manages.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ToolCache {
-    pub tools: HashMap<String, ToolEntry>,
+    pub tools: HashMap<CiString, ToolEntry>,
 }
 
 impl ToolCache {
@@ -47,7 +48,7 @@ impl ToolCache {
     pub fn download_if_necessary(source: &str, version_req: &VersionReq) -> Option<Version> {
         let cache = Self::load().unwrap();
 
-        if let Some(tool) = cache.tools.get(source) {
+        if let Some(tool) = cache.tools.get(&CiString(source.to_owned())) {
             log::debug!("Tool has some versions installed");
 
             let matching_version = tool
@@ -133,7 +134,7 @@ impl ToolCache {
 
             log::trace!("Updating tool cache");
             let mut cache = Self::load().unwrap();
-            let tool = cache.tools.entry(source.to_owned()).or_default();
+            let tool = cache.tools.entry(CiString(source.to_owned())).or_default();
             tool.versions.insert(version.clone());
             cache.save().unwrap();
 

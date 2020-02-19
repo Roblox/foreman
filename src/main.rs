@@ -1,6 +1,7 @@
 mod aliaser;
 mod artifact_choosing;
 mod auth_store;
+mod ci_string;
 mod config;
 mod fs;
 mod github;
