@@ -121,15 +121,12 @@ impl ToolCache {
             let mut output = BufWriter::new(File::create(&tool_path).unwrap());
             io::copy(&mut file, &mut output).unwrap();
 
-            // On Unix systems, we need to preserve permissions from the archive
-            // like executability.
+            // On Unix systems, mark the tool as executable.
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
 
-                if let Some(mode) = file.unix_mode() {
-                    fs::set_permissions(&tool_path, fs::Permissions::from_mode(mode)).unwrap();
-                }
+                fs::set_permissions(&tool_path, fs::Permissions::from_mode(0o777)).unwrap();
             }
 
             log::trace!("Updating tool cache");
