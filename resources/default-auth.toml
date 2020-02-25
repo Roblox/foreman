@@ -4,7 +4,8 @@
 # `github` key. This is useful if you hit GitHub API rate limits or if you need
 # to access private tools.
 
+# You can also run `foreman github-auth` to update this file, optionally passing
+# the token as the first argument.
+
 # In order to use sources from private repositories, this token will need "repo"
 # permissions granted to it and potentially SSO authorization.
-
-# github = "<PAC HERE>"

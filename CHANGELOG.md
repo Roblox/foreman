@@ -1,5 +1,8 @@
 # Foreman Changelog
 
+## [Unreleased]
+- Added `foreman github-auth` command for authenticating with GitHub.
+
 ## 0.5.1
 - On Unix systems, tools now always have permissions of 777.
 	- This ensures that they're executable, even when the containing archives fail to preserve permissions.

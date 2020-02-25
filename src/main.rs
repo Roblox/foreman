@@ -12,7 +12,9 @@ use std::{env, error::Error, io};
 
 use structopt::StructOpt;
 
-use crate::{aliaser::add_self_alias, config::ConfigFile, tool_cache::ToolCache};
+use crate::{
+    aliaser::add_self_alias, auth_store::AuthStore, config::ConfigFile, tool_cache::ToolCache,
+};
 
 #[derive(Debug)]
 struct ToolInvocation {
@@ -88,6 +90,21 @@ enum Subcommand {
 
     /// List installed tools.
     List,
+
+    /// Set the GitHub Personal Access Token that Foreman should use with the
+    /// GitHub API.
+    ///
+    /// This token can also be configured by editing ~/.foreman/auth.toml.
+    #[structopt(name = "github-auth")]
+    GitHubAuth(GitHubAuthCommand),
+}
+
+#[derive(Debug, StructOpt)]
+struct GitHubAuthCommand {
+    /// GitHub personal access token that Foreman should use.
+    ///
+    /// If not specified, Foreman will prompt for it.
+    token: Option<String>,
 }
 
 fn actual_main() -> io::Result<()> {
@@ -116,6 +133,30 @@ fn actual_main() -> io::Result<()> {
                     println!("    - {}", version);
                 }
             }
+        }
+        Subcommand::GitHubAuth(subcommand) => {
+            let token = match subcommand.token {
+                Some(token) => token,
+                None => {
+                    println!("Foreman authenticates to GitHub using Personal Access Tokens.");
+                    println!("https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line");
+                    println!();
+
+                    loop {
+                        let token = rpassword::read_password_from_tty(Some("GitHub Token: "))?;
+
+                        if token.is_empty() {
+                            println!("Token must be non-empty.");
+                        } else {
+                            break token;
+                        }
+                    }
+                }
+            };
+
+            AuthStore::set_github_token(&token)?;
+
+            println!("GitHub auth saved successfully.");
         }
     }
 

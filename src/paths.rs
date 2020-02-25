@@ -2,10 +2,9 @@
 
 use std::{io, path::PathBuf};
 
-use crate::fs;
+use crate::{auth_store::DEFAULT_AUTH_CONFIG, fs};
 
 static DEFAULT_USER_CONFIG: &str = include_str!("../resources/default-foreman.toml");
-static DEFAULT_AUTH_STORE: &str = include_str!("../resources/default-auth.toml");
 
 pub fn base_dir() -> PathBuf {
     let mut dir = dirs::home_dir().unwrap();
@@ -54,7 +53,7 @@ pub fn create() -> io::Result<()> {
     let auth = auth_store();
     if let Err(err) = fs::metadata(&auth) {
         if err.kind() == io::ErrorKind::NotFound {
-            fs::write(&auth, DEFAULT_AUTH_STORE)?;
+            fs::write(&auth, DEFAULT_AUTH_CONFIG)?;
         } else {
             return Err(err);
         }

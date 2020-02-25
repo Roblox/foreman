@@ -1,8 +1,11 @@
 use std::io;
 
 use serde::{Deserialize, Serialize};
+use toml_edit::{value, Document};
 
 use crate::{fs, paths};
+
+pub static DEFAULT_AUTH_CONFIG: &str = include_str!("../resources/default-auth.toml");
 
 /// Contains stored user tokens that Foreman can use to download tools.
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -34,5 +37,24 @@ impl AuthStore {
                 }
             }
         }
+    }
+
+    pub fn set_github_token(token: &str) -> io::Result<()> {
+        let contents = match fs::read_to_string(paths::auth_store()) {
+            Ok(contents) => contents,
+            Err(err) => {
+                if err.kind() == io::ErrorKind::NotFound {
+                    DEFAULT_AUTH_CONFIG.to_owned()
+                } else {
+                    return Err(err);
+                }
+            }
+        };
+
+        let mut store: Document = contents.parse().unwrap();
+        store["github"] = value(token);
+
+        let serialized = store.to_string();
+        fs::write(paths::auth_store(), serialized)
     }
 }

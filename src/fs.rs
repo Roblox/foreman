@@ -21,6 +21,13 @@ pub fn read<P: AsRef<Path>>(path: P) -> Result<Vec<u8>> {
     fs::read(path).map_err(|source| Error::new(source, path))
 }
 
+/// A wrapper around std::fs::read_to_string.
+pub fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
+    let path = path.as_ref();
+
+    fs::read_to_string(path).map_err(|source| Error::new(source, path))
+}
+
 /// A wrapper around std::fs::write.
 pub fn write<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> Result<()> {
     let path = path.as_ref();
