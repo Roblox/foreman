@@ -1,6 +1,6 @@
 # Foreman Changelog
 
-## [Unreleased]
+## 0.6.0
 - Added `foreman github-auth` command for authenticating with GitHub.
 
 ## 0.5.1
