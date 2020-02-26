@@ -6,20 +6,26 @@ Foreman is inspired by [rustup](https://rustup.rs) and [asdf](https://github.com
 It's an early prototype, but feedback at this stage is welcome!
 
 ## Installation
+
+### GitHub Releases
 You can download pre-built Foreman releases for Windows, macOS, and Linux from the [Releases](https://github.com/rojo-rbx/foreman/releases) page.
 
-Alternatively, you can install from the `master` branch if you have [Rust](https://www.rust-lang.org/) 1.41.0 or newer installed:
+### GitHub Actions
+You can use the official [setup-foreman](https://github.com/rojo-rbx/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
+
+### From Source
+If you have [Rust](https://www.rust-lang.org/) 1.41.0 or newer installed, you can also compile Foreman directly from Git yourself:
 
 ```bash
 cargo install --git https://github.com/rojo-rbx/foreman.git
 ```
 
-On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (`~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
-
-It's recommended that you **add `~/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system.
-
 ## Usage
 Foreman downloads tools from GitHub and references them by their `user/repo` name, like `rojo-rbx/foreman`.
+
+On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
+
+It's recommended that you **add `~/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system.
 
 ### System Tools
 To start using Foreman to manage your system's default tools, create the file `~/.foreman/foreman.toml`.
@@ -52,7 +58,7 @@ When inside this directory, the `remodel` command will run the latest 0.6.x rele
 ### Authentication
 To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line).
 
-Open `~/.foreman/auth.toml` after Foreman has run at least once to see instructions on how to set this up.
+Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
 
 ## Troubleshooting
 Foreman is a work in progress tool and has some known issues. Check out [the issue tracker](https://github.com/rojo-rbx/foreman/issues) for known bugs.
