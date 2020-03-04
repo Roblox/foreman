@@ -1,4 +1,9 @@
+<img align="right" width="300" src="foreman.png" />
+
 # Foreman
+[![Actions Status](https://github.com/rojo-rbx/foreman/workflows/CI/badge.svg)](https://github.com/rojo-rbx/foreman/actions?query=workflow%3ACI)
+[![Latest Release on crates.io](https://img.shields.io/crates/v/foreman.svg?label=latest%20release)](https://crates.io/crates/foreman)
+
 Foreman is a toolchain manager to help Roblox developers manage their installations of tools like [Rojo](https://github.com/rojo-rbx/rojo), [Remodel](https://github.com/rojo-rbx/remodel), [Tarmac](https://github.com/rojo-rbx/tarmac), and [Selene](https://github.com/Kampfkarren/selene).
 
 Foreman is inspired by [rustup](https://rustup.rs) and [asdf](https://github.com/asdf-vm/asdf).
@@ -14,10 +19,10 @@ You can download pre-built Foreman releases for Windows, macOS, and Linux from t
 You can use the official [setup-foreman](https://github.com/rojo-rbx/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
 
 ### From Source
-If you have [Rust](https://www.rust-lang.org/) 1.41.0 or newer installed, you can also compile Foreman directly from Git yourself:
+If you have [Rust](https://www.rust-lang.org/) 1.41.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
 
 ```bash
-cargo install --git https://github.com/rojo-rbx/foreman.git
+cargo install foreman
 ```
 
 ## Usage

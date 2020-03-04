@@ -1,5 +1,9 @@
 # Foreman Changelog
 
+## 1.0.0
+- No changes since 0.6.0.
+- Initial release on crates.io.
+
 ## 0.6.0
 - Added `foreman github-auth` command for authenticating with GitHub.
 
