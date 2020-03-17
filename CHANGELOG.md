@@ -1,5 +1,8 @@
 # Foreman Changelog
 
+## 1.0.1
+- Metadata fix for crates.io release
+
 ## 1.0.0
 - No changes since 0.6.0.
 - Initial release on crates.io.
