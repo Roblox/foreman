@@ -1,5 +1,8 @@
 # Foreman Changelog
 
+## Unreleased
+- Fixed Foreman not propagating error codes from underlying tools. ([#20](https://github.com/rojo-rbx/foreman/pull/20))
+
 ## 1.0.1
 - Metadata fix for crates.io release
 

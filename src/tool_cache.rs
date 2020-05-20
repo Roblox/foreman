@@ -30,6 +30,7 @@ pub struct ToolCache {
 }
 
 impl ToolCache {
+    #[must_use]
     pub fn run(source: &str, version: &Version, args: Vec<String>) -> i32 {
         log::debug!("Running tool {}@{}", source, version);
 

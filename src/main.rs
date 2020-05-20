@@ -8,7 +8,7 @@ mod github;
 mod paths;
 mod tool_cache;
 
-use std::{env, error::Error, io};
+use std::{env, error::Error, io, process};
 
 use structopt::StructOpt;
 
@@ -58,7 +58,11 @@ fn main() -> Result<(), Box<dyn Error>> {
                 ToolCache::download_if_necessary(&tool_spec.source, &tool_spec.version);
 
             if let Some(version) = maybe_version {
-                ToolCache::run(&tool_spec.source, &version, invocation.args);
+                let exit_code = ToolCache::run(&tool_spec.source, &version, invocation.args);
+
+                if exit_code != 0 {
+                    process::exit(exit_code);
+                }
             }
 
             return Ok(());
