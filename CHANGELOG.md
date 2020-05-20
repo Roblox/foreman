@@ -1,6 +1,8 @@
 # Foreman Changelog
 
-## Unreleased
+## Unreleased Changes
+
+## 1.0.2 (2020-05-20)
 - Fixed Foreman not propagating error codes from underlying tools. ([#20](https://github.com/rojo-rbx/foreman/pull/20))
 
 ## 1.0.1
