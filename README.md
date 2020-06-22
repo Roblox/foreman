@@ -1,7 +1,7 @@
 <img align="right" width="300" src="foreman.png" />
 
 # Foreman
-[![Actions Status](https://github.com/rojo-rbx/foreman/workflows/CI/badge.svg)](https://github.com/rojo-rbx/foreman/actions?query=workflow%3ACI)
+[![Actions Status](https://github.com/Roblox/foreman/workflows/CI/badge.svg)](https://github.com/Roblox/foreman/actions?query=workflow%3ACI)
 [![Latest Release on crates.io](https://img.shields.io/crates/v/foreman.svg?label=latest%20release)](https://crates.io/crates/foreman)
 
 Foreman is a toolchain manager to help Roblox developers manage their installations of tools like [Rojo](https://github.com/rojo-rbx/rojo), [Remodel](https://github.com/rojo-rbx/remodel), [Tarmac](https://github.com/rojo-rbx/tarmac), and [Selene](https://github.com/Kampfkarren/selene).
@@ -13,7 +13,7 @@ It's an early prototype, but feedback at this stage is welcome!
 ## Installation
 
 ### GitHub Releases
-You can download pre-built Foreman releases for Windows, macOS, and Linux from the [Releases](https://github.com/rojo-rbx/foreman/releases) page.
+You can download pre-built Foreman releases for Windows, macOS, and Linux from the [Releases](https://github.com/Roblox/foreman/releases) page.
 
 ### GitHub Actions
 You can use the official [setup-foreman](https://github.com/rojo-rbx/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
@@ -26,7 +26,7 @@ cargo install foreman
 ```
 
 ## Usage
-Foreman downloads tools from GitHub and references them by their `user/repo` name, like `rojo-rbx/foreman`.
+Foreman downloads tools from GitHub and references them by their `user/repo` name, like `Roblox/foreman`.
 
 On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
 
@@ -66,7 +66,7 @@ To install tools from a private GitHub repository, Foreman supports authenticati
 Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
 
 ## Troubleshooting
-Foreman is a work in progress tool and has some known issues. Check out [the issue tracker](https://github.com/rojo-rbx/foreman/issues) for known bugs.
+Foreman is a work in progress tool and has some known issues. Check out [the issue tracker](https://github.com/Roblox/foreman/issues) for known bugs.
 
 If you have issues with configuration, you can delete `~/.foreman` to delete all cached data and start from scratch. This directory contains all of Foreman's installed tools and configuration.
 

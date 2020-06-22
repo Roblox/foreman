@@ -4,8 +4,8 @@ description = "Toolchain manager for simple binary tools"
 version = "1.0.2"
 authors = ["Lucien Greathouse <me@lpghatguy.com>"]
 license = "MIT"
-homepage = "https://github.com/rojo-rbx/foreman#readme"
-repository = "https://github.com/rojo-rbx/foreman"
+homepage = "https://github.com/Roblox/foreman#readme"
+repository = "https://github.com/Roblox/foreman"
 readme = "README.md"
 edition = "2018"
 

@@ -16,7 +16,7 @@ pub fn get_releases(repo: &str) -> reqwest::Result<Vec<Release>> {
     let client = Client::new();
 
     let url = format!("https://api.github.com/repos/{}/releases", repo);
-    let mut builder = client.get(&url).header(USER_AGENT, "rojo-rbx/foreman");
+    let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
 
     let auth_store = AuthStore::load().unwrap();
     if let Some(token) = &auth_store.github {
@@ -43,7 +43,7 @@ pub fn download_asset<W: Write>(url: &str, mut output: W) -> reqwest::Result<()>
 
     let mut builder = client
         .get(url)
-        .header(USER_AGENT, "rojo-rbx/foreman")
+        .header(USER_AGENT, "Roblox/foreman")
         // Setting `Accept` is required to make the GitHub API return the actual
         // release asset instead of JSON metadata about the release.
         .header(ACCEPT, "application/octet-stream");
