@@ -12,6 +12,8 @@ use std::{env, error::Error, io, process};
 
 use structopt::StructOpt;
 
+use opener::open;
+
 use crate::{
     aliaser::add_self_alias, auth_store::AuthStore, config::ConfigFile, tool_cache::ToolCache,
 };
@@ -101,6 +103,9 @@ enum Subcommand {
     /// This token can also be configured by editing ~/.foreman/auth.toml.
     #[structopt(name = "github-auth")]
     GitHubAuth(GitHubAuthCommand),
+
+    /// Opens the foreman.toml file in %USERPROFILE%/.foreman/foreman.toml on windows or ~/.foreman/foreman.toml on Unix systems
+    Open
 }
 
 #[derive(Debug, StructOpt)]
@@ -161,6 +166,19 @@ fn actual_main() -> io::Result<()> {
             AuthStore::set_github_token(&token)?;
 
             println!("GitHub auth saved successfully.");
+        }
+        Subcommand::Open => {
+            if cfg!(windows) {
+                let path = "/.foreman/foreman.toml";
+                let userprofile = std::env::var("USERPROFILE").unwrap();
+                
+                open(format!("{0}{1}", userprofile, path)).unwrap();
+            } else if cfg!(unix) {
+                let path = "/.foreman/foreman.toml";
+                let home = std::env::var("HOME").unwrap();
+
+                open(format!("{0}{1}", home, path)).unwrap();
+            }
         }
     }
 
