@@ -105,7 +105,7 @@ enum Subcommand {
     GitHubAuth(GitHubAuthCommand),
 
     /// Opens the foreman.toml file in %USERPROFILE%/.foreman/foreman.toml on windows or ~/.foreman/foreman.toml on Unix systems
-    Open
+    Open,
 }
 
 #[derive(Debug, StructOpt)]
@@ -171,7 +171,7 @@ fn actual_main() -> io::Result<()> {
             if cfg!(windows) {
                 let path = "/.foreman/foreman.toml";
                 let userprofile = std::env::var("USERPROFILE").unwrap();
-                
+
                 open(format!("{0}{1}", userprofile, path)).unwrap();
             } else if cfg!(unix) {
                 let path = "/.foreman/foreman.toml";
