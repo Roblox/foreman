@@ -1,6 +1,7 @@
 # Foreman Changelog
 
 ## Unreleased Changes
+- Added `open` command that opens the `.foreman` folder in `~/.foreman` on Unix systems or `%USERPROFILE%/.foreman` on Windows systems. ([#23](https://github.com/Roblox/foreman/pull/23))
 
 ## 1.0.2 (2020-05-20)
 - Fixed Foreman not propagating error codes from underlying tools. ([#20](https://github.com/Roblox/foreman/pull/20))
