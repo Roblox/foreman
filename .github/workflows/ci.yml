@@ -16,10 +16,10 @@ jobs:
 
     strategy:
       matrix:
-        rust_version: [stable, "1.41.0"]
+        rust_version: [stable, "1.55.0"]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v2
 
     - name: Setup Rust toolchain
       run: rustup default ${{ matrix.rust_version }}
