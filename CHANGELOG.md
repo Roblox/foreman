@@ -2,6 +2,10 @@
 
 ## Unreleased Changes
 
+- Support tools hosted on GitLab ([#31](https://github.com/Roblox/foreman/pull/31))
+  - Updated config format to support both GitHub and GitLab tools
+  - Added `foreman gitlab-auth` command for authenticating with GitLab.
+
 ## 1.0.2 (2020-05-20)
 - Fixed Foreman not propagating error codes from underlying tools. ([#20](https://github.com/Roblox/foreman/pull/20))
 
