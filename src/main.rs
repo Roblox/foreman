@@ -4,9 +4,9 @@ mod auth_store;
 mod ci_string;
 mod config;
 mod fs;
-mod github;
 mod paths;
 mod tool_cache;
+mod tool_provider;
 
 use std::{env, error::Error, io, process};
 
@@ -39,7 +39,7 @@ impl ToolInvocation {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let env = env_logger::Env::new().default_filter_or("foreman=info");
+    let env = env_logger::Env::new().default_filter_or("foreman=trace");
     env_logger::Builder::from_env(env)
         .format_module_path(false)
         .format_timestamp(None)
@@ -52,13 +52,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         let config = ConfigFile::aggregate()?;
 
         if let Some(tool_spec) = config.tools.get(&invocation.name) {
-            log::debug!("Found tool spec {}@{}", tool_spec.source, tool_spec.version);
+            log::debug!("Found tool spec {}", tool_spec);
 
-            let maybe_version =
-                ToolCache::download_if_necessary(&tool_spec.source, &tool_spec.version);
+            let mut tool_cache = ToolCache::load()?;
+            let maybe_version = tool_cache.download_if_necessary(tool_spec);
 
             if let Some(version) = maybe_version {
-                let exit_code = ToolCache::run(&tool_spec.source, &version, invocation.args);
+                let exit_code = ToolCache::run(tool_spec, &version, invocation.args);
 
                 if exit_code != 0 {
                     process::exit(exit_code);
@@ -101,11 +101,26 @@ enum Subcommand {
     /// This token can also be configured by editing ~/.foreman/auth.toml.
     #[structopt(name = "github-auth")]
     GitHubAuth(GitHubAuthCommand),
+
+    /// Set the GitLab Personal Access Token that Foreman should use with the
+    /// GitLab API.
+    ///
+    /// This token can also be configured by editing ~/.foreman/auth.toml.
+    #[structopt(name = "gitlab-auth")]
+    GitLabAuth(GitLabAuthCommand),
 }
 
 #[derive(Debug, StructOpt)]
 struct GitHubAuthCommand {
     /// GitHub personal access token that Foreman should use.
+    ///
+    /// If not specified, Foreman will prompt for it.
+    token: Option<String>,
+}
+
+#[derive(Debug, StructOpt)]
+struct GitLabAuthCommand {
+    /// GitLab personal access token that Foreman should use.
     ///
     /// If not specified, Foreman will prompt for it.
     token: Option<String>,
@@ -120,15 +135,17 @@ fn actual_main() -> io::Result<()> {
 
             log::trace!("Installing from gathered config: {:#?}", config);
 
+            let mut cache = ToolCache::load()?;
+
             for (tool_alias, tool_spec) in &config.tools {
-                ToolCache::download_if_necessary(&tool_spec.source, &tool_spec.version);
+                cache.download_if_necessary(tool_spec);
                 add_self_alias(tool_alias);
             }
         }
         Subcommand::List => {
             println!("Installed tools:");
 
-            let cache = ToolCache::load().unwrap();
+            let cache = ToolCache::load()?;
 
             for (tool_source, tool) in &cache.tools {
                 println!("  {}", tool_source);
@@ -139,30 +156,54 @@ fn actual_main() -> io::Result<()> {
             }
         }
         Subcommand::GitHubAuth(subcommand) => {
-            let token = match subcommand.token {
-                Some(token) => token,
-                None => {
-                    println!("Foreman authenticates to GitHub using Personal Access Tokens.");
-                    println!("https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line");
-                    println!();
-
-                    loop {
-                        let token = rpassword::read_password_from_tty(Some("GitHub Token: "))?;
-
-                        if token.is_empty() {
-                            println!("Token must be non-empty.");
-                        } else {
-                            break token;
-                        }
-                    }
-                }
-            };
+            let token = prompt_auth_token(
+                    subcommand.token,
+                    "GitHub",
+                    "https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line",
+                )?;
 
             AuthStore::set_github_token(&token)?;
 
             println!("GitHub auth saved successfully.");
         }
+        Subcommand::GitLabAuth(subcommand) => {
+            let token = prompt_auth_token(
+                subcommand.token,
+                "GitLab",
+                "https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
+            )?;
+
+            AuthStore::set_gitlab_token(&token)?;
+
+            println!("GitLab auth saved successfully.");
+        }
     }
 
     Ok(())
+}
+
+fn prompt_auth_token(token: Option<String>, provider: &str, help: &str) -> io::Result<String> {
+    match token {
+        Some(token) => Ok(token),
+        None => {
+            println!("GitHub auth saved successfully.");
+            println!(
+                "Foreman authenticates to {} using Personal Access Tokens.",
+                provider
+            );
+            println!("{}", help);
+            println!();
+
+            loop {
+                let token =
+                    rpassword::read_password_from_tty(Some(&format!("{} Token: ", provider)))?;
+
+                if token.is_empty() {
+                    println!("Token must be non-empty.");
+                } else {
+                    break Ok(token);
+                }
+            }
+        }
+    }
 }

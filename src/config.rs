@@ -1,19 +1,73 @@
-use std::{collections::HashMap, env, io};
+use std::{collections::HashMap, env, fmt, io};
 
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
-use crate::{fs, paths};
+use crate::{ci_string::CiString, fs, paths, tool_provider::Provider};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigFile {
     pub tools: HashMap<String, ToolSpec>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ToolSpec {
-    pub source: String,
-    pub version: VersionReq,
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ToolSpec {
+    Github {
+        // alias to `source` for backward compatibilty
+        #[serde(alias = "source")]
+        github: String,
+        version: VersionReq,
+    },
+    Gitlab {
+        gitlab: String,
+        version: VersionReq,
+    },
+}
+
+impl ToolSpec {
+    pub fn cache_key(&self) -> CiString {
+        match self {
+            ToolSpec::Github { github, .. } => CiString(github.clone()),
+            ToolSpec::Gitlab { gitlab, .. } => CiString(format!("gitlab@{}", gitlab)),
+        }
+    }
+
+    pub fn source(&self) -> &str {
+        match self {
+            ToolSpec::Github { github: source, .. } | ToolSpec::Gitlab { gitlab: source, .. } => {
+                source
+            }
+        }
+    }
+
+    pub fn version(&self) -> &VersionReq {
+        match self {
+            ToolSpec::Github { version, .. } | ToolSpec::Gitlab { version, .. } => version,
+        }
+    }
+
+    pub fn provider(&self) -> Provider {
+        match self {
+            ToolSpec::Github { .. } => Provider::Github,
+            ToolSpec::Gitlab { .. } => Provider::Gitlab,
+        }
+    }
+}
+
+impl fmt::Display for ToolSpec {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}.com/{}@{}",
+            match self {
+                ToolSpec::Github { .. } => "github",
+                ToolSpec::Gitlab { .. } => "gitlab",
+            },
+            self.source(),
+            self.version(),
+        )
+    }
 }
 
 impl ConfigFile {
@@ -73,5 +127,69 @@ impl ConfigFile {
         }
 
         Ok(config)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    fn new_github<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
+        ToolSpec::Github {
+            github: github.into(),
+            version,
+        }
+    }
+
+    fn new_gitlab<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
+        ToolSpec::Gitlab {
+            gitlab: github.into(),
+            version,
+        }
+    }
+
+    fn version(string: &str) -> VersionReq {
+        VersionReq::parse(string).unwrap()
+    }
+
+    mod deserialization {
+        use super::*;
+
+        #[test]
+        fn github_from_source_field() {
+            let github: ToolSpec =
+                toml::from_str(&[r#"source = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
+                    .unwrap();
+            assert_eq!(github, new_github("user/repo", version("0.1.0")));
+        }
+
+        #[test]
+        fn github_from_github_field() {
+            let github: ToolSpec =
+                toml::from_str(&[r#"github = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
+                    .unwrap();
+            assert_eq!(github, new_github("user/repo", version("0.1.0")));
+        }
+
+        #[test]
+        fn gitlab_from_gitlab_field() {
+            let gitlab: ToolSpec =
+                toml::from_str(&[r#"gitlab = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
+                    .unwrap();
+            assert_eq!(gitlab, new_gitlab("user/repo", version("0.1.0")));
+        }
+    }
+
+    #[test]
+    fn tool_cache_entry_is_backward_compatible() {
+        let github = new_github("user/repo", version("7.0.0"));
+        assert_eq!(github.cache_key(), "user/repo".into());
+    }
+
+    #[test]
+    fn tool_cache_entry_is_different_for_github_and_gitlab_identical_projects() {
+        let github = new_github("user/repo", version("7.0.0"));
+        let gitlab = new_gitlab("user/repo", version("7.0.0"));
+        assert_ne!(github.cache_key(), gitlab.cache_key());
     }
 }
