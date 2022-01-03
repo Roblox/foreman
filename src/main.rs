@@ -39,7 +39,7 @@ impl ToolInvocation {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let env = env_logger::Env::new().default_filter_or("foreman=trace");
+    let env = env_logger::Env::new().default_filter_or("foreman=info");
     env_logger::Builder::from_env(env)
         .format_module_path(false)
         .format_timestamp(None)
