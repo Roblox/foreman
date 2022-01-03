@@ -39,7 +39,7 @@ impl ToolCache {
         log::debug!("Running tool {}", tool);
 
         let mut tool_path = paths::tools_dir();
-        let exe_name = tool_identifier_to_exe_name(&tool.cache_key().0, version);
+        let exe_name = tool_identifier_to_exe_name(tool, version);
         tool_path.push(exe_name);
 
         let status = process::Command::new(tool_path)
@@ -119,7 +119,7 @@ impl ToolCache {
             let mut file = archive.by_index(0).unwrap();
 
             let mut tool_path = paths::tools_dir();
-            let exe_name = tool_identifier_to_exe_name(tool.source(), &version);
+            let exe_name = tool_identifier_to_exe_name(tool, &version);
             tool_path.push(exe_name);
 
             let mut output = BufWriter::new(File::create(&tool_path).unwrap());
@@ -174,8 +174,8 @@ pub struct ToolEntry {
     pub versions: BTreeSet<Version>,
 }
 
-fn tool_identifier_to_exe_name(source: &str, version: &Version) -> String {
-    let mut name = format!("{}-{}{}", source, version, EXE_SUFFIX);
+fn tool_identifier_to_exe_name(tool: &ToolSpec, version: &Version) -> String {
+    let mut name = format!("{}-{}{}", tool.cache_key().0, version, EXE_SUFFIX);
     name = name.replace('/', "__");
     name.replace('\\', "__")
 }
