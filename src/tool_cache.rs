@@ -80,8 +80,8 @@ impl ToolCache {
 
                 let version = Version::parse(&release.tag_name).ok().or_else(|| {
                     if !release.tag_name.starts_with('v') {
-                	log::info!(
-                            "Release tag name did not start with 'v'! {}", 
+                        log::info!(
+                            "Release tag name did not start with 'v'! {}",
                             release.tag_name
                         );
                         return None;
