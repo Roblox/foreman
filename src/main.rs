@@ -202,7 +202,7 @@ fn prompt_auth_token(token: Option<String>, provider: &str, help: &str) -> io::R
     match token {
         Some(token) => Ok(token),
         None => {
-            println!("GitHub auth saved successfully.");
+            println!("{} auth saved successfully.", provider);
             println!(
                 "Foreman authenticates to {} using Personal Access Tokens.",
                 provider
