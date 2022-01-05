@@ -39,12 +39,24 @@ impl ToolInvocation {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let env = env_logger::Env::new().default_filter_or("foreman=info");
-    env_logger::Builder::from_env(env)
-        .format_module_path(false)
-        .format_timestamp(None)
-        .format_indent(Some(8))
-        .init();
+    let app = Options::from_args();
+
+    {
+        let log_filter = match app.verbose {
+            0 => "warn,foreman=info",
+            1 => "info,foreman=debug",
+            2 => "info,foreman=trace",
+            _ => "trace",
+        };
+
+        let env = env_logger::Env::default().default_filter_or(log_filter);
+
+        env_logger::Builder::from_env(env)
+            .format_module_path(false)
+            .format_timestamp(None)
+            .format_indent(Some(8))
+            .init();
+    }
 
     paths::create()?;
 
@@ -83,6 +95,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 #[derive(Debug, StructOpt)]
 struct Options {
+    /// Logging verbosity. Supply multiple for more verbosity, up to -vvv
+    #[structopt(short, parse(from_occurrences), global = true)]
+    pub verbose: u8,
+
     #[structopt(subcommand)]
     subcommand: Subcommand,
 }

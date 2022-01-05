@@ -1,6 +1,11 @@
 # Foreman Changelog
 
 ## Unreleased Changes
+- Logging improvements ([#30](https://github.com/Roblox/foreman/pull/30))
+	- Add commandline option to increase logging level (`-v`, `-vv`, etc)
+	- Add an INFO-level log explaining when a release version tag name doesn't match expected convention.
+	- Default logging to INFO level. Fixes ([#27]https://github.com/Roblox/foreman/issues/27).
+
 
 - Support tools hosted on GitLab ([#31](https://github.com/Roblox/foreman/pull/31))
   - Updated config format to support both GitHub and GitLab tools
