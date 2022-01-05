@@ -1,6 +1,11 @@
 # Foreman Changelog
 
 ## Unreleased Changes
+- Logging improvements ([#30](https://github.com/Roblox/foreman/pull/30))
+	- Add commandline option to increase logging level (`-v`, `-vv`, etc)
+	- Add an INFO-level log explaining when a release version tag name doesn't match expected convention.
+	- Default logging to INFO level. Fixes ([#27]https://github.com/Roblox/foreman/issues/27).
+
 
 ## 1.0.2 (2020-05-20)
 - Fixed Foreman not propagating error codes from underlying tools. ([#20](https://github.com/Roblox/foreman/pull/20))
