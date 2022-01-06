@@ -19,18 +19,32 @@ You can download pre-built Foreman releases for Windows, macOS, and Linux from t
 You can use the official [setup-foreman](https://github.com/rojo-rbx/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
 
 ### From Source
-If you have [Rust](https://www.rust-lang.org/) 1.41.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
+If you have [Rust](https://www.rust-lang.org/) 1.42.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
 
 ```bash
 cargo install foreman
 ```
 
 ## Usage
-Foreman downloads tools from GitHub and references them by their `user/repo` name, like `Roblox/foreman`.
+Foreman downloads tools from GitHub or GitLab and references them by their `user/repo` name, like `Roblox/foreman`.
 
 On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
 
 It's recommended that you **add `~/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system.
+
+### Configuration File
+
+Foreman uses [TOML](https://toml.io/en/) for its configuration file. It simply takes a single `tools` entry and an enumeration of the tools you need, which looks like this:
+
+```toml
+[tools]
+rojo = { github = "rojo-rbx/rojo", version = "7.0.0" }
+darklua = { gitlab = "seaofvoices/darklua", version = "0.7.0" }
+```
+
+As you may already have noticed, the tool name is located at the left side of `=` and the right side contains the information necessary to download it. For GitHub tools, use `github = "user/repo-name"` and for GitLab, use `gitlab = "user/repo-name"`.
+
+Previously, foreman was only able to download tools from GitHub and the format used to be `source = "rojo-rbx/rojo"`. For backward compatibility, foreman still supports this format.
 
 ### System Tools
 To start using Foreman to manage your system's default tools, create the file `~/.foreman/foreman.toml`.
@@ -39,7 +53,7 @@ A Foreman config that lists Rojo could look like:
 
 ```toml
 [tools]
-rojo = { source = "rojo-rbx/rojo", version = "0.5.0" }
+rojo = { github = "rojo-rbx/rojo", version = "7.0.0" }
 ```
 
 Run `foreman install` from any directory to have Foreman pick up and install the tools listed in your system's Foreman config.
@@ -53,7 +67,7 @@ A Foreman config that lists Remodel might look like this:
 
 ```toml
 [tools]
-remodel = { source = "rojo-rbx/remodel", version = "0.6.1" }
+remodel = { github = "rojo-rbx/remodel", version = "0.9.1" }
 ```
 
 Run `foreman install` to tell Foreman to install any new binaries from this config file.
@@ -64,6 +78,8 @@ When inside this directory, the `remodel` command will run the latest 0.6.x rele
 To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line).
 
 Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
+
+Similarly, for projects hosted on a GitLab repository, use `foreman gitlab-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml`.
 
 ## Troubleshooting
 Foreman is a work in progress tool and has some known issues. Check out [the issue tracker](https://github.com/Roblox/foreman/issues) for known bugs.

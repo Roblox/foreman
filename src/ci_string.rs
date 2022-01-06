@@ -13,6 +13,12 @@ use serde::{Deserialize, Serialize};
 #[serde(transparent)]
 pub struct CiString(pub String);
 
+impl From<&str> for CiString {
+    fn from(string: &str) -> Self {
+        Self(string.to_owned())
+    }
+}
+
 impl fmt::Display for CiString {
     fn fmt(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str(&self.0)

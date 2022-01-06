@@ -6,15 +6,17 @@ use std::{
     process,
 };
 
-use semver::{Version, VersionReq};
+use semver::Version;
 use serde::{Deserialize, Serialize};
 use zip::ZipArchive;
 
 use crate::{
     artifact_choosing::platform_keywords,
     ci_string::CiString,
+    config::ToolSpec,
     fs::{self, File},
-    github, paths,
+    paths,
+    tool_provider::ToolProvider,
 };
 
 fn index_file() -> PathBuf {
@@ -27,15 +29,17 @@ fn index_file() -> PathBuf {
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ToolCache {
     pub tools: HashMap<CiString, ToolEntry>,
+    #[serde(skip)]
+    providers: ToolProvider,
 }
 
 impl ToolCache {
     #[must_use]
-    pub fn run(source: &str, version: &Version, args: Vec<String>) -> i32 {
-        log::debug!("Running tool {}@{}", source, version);
+    pub fn run(tool: &ToolSpec, version: &Version, args: Vec<String>) -> i32 {
+        log::debug!("Running tool {}", tool);
 
         let mut tool_path = paths::tools_dir();
-        let exe_name = tool_identifier_to_exe_name(source, version);
+        let exe_name = tool_identifier_to_exe_name(tool, version);
         tool_path.push(exe_name);
 
         let status = process::Command::new(tool_path)
@@ -46,30 +50,29 @@ impl ToolCache {
         status.code().unwrap_or(1)
     }
 
-    pub fn download_if_necessary(source: &str, version_req: &VersionReq) -> Option<Version> {
-        let cache = Self::load().unwrap();
-
-        if let Some(tool) = cache.tools.get(&CiString(source.to_owned())) {
+    pub fn download_if_necessary(&mut self, tool: &ToolSpec) -> Option<Version> {
+        if let Some(tool_entry) = self.tools.get(&tool.cache_key()) {
             log::debug!("Tool has some versions installed");
 
-            let matching_version = tool
+            let matching_version = tool_entry
                 .versions
                 .iter()
                 .rev()
-                .find(|version| version_req.matches(version));
+                .find(|version| tool.version().matches(version));
 
             if let Some(version) = matching_version {
                 return Some(version.clone());
             }
         }
 
-        Self::download(source, version_req)
+        self.download(tool)
     }
 
-    pub fn download(source: &str, version_req: &VersionReq) -> Option<Version> {
-        log::info!("Downloading {}@{}", source, version_req);
+    pub fn download(&mut self, tool: &ToolSpec) -> Option<Version> {
+        log::info!("Downloading {}", tool);
 
-        let releases = github::get_releases(source).unwrap();
+        let provider = self.providers.get(&tool.provider());
+        let releases = provider.get_releases(tool.source()).unwrap();
 
         // Filter down our set of releases to those that are valid versions and
         // have release assets for our current platform.
@@ -104,6 +107,7 @@ impl ToolCache {
         // descending version numbers.
         semver_releases.sort_by(|a, b| b.0.cmp(&a.0));
 
+        let version_req = tool.version();
         let matching_release = semver_releases
             .into_iter()
             .find(|(version, _asset_index, _release)| version_req.matches(version));
@@ -112,15 +116,14 @@ impl ToolCache {
             log::trace!("Picked version {}", version);
 
             let url = &release.assets[asset_index].url;
-            let mut buffer = Vec::new();
-            github::download_asset(url, &mut buffer).unwrap();
+            let buffer = provider.download_asset(url).unwrap();
 
             log::trace!("Extracting downloaded artifact");
             let mut archive = ZipArchive::new(Cursor::new(&buffer)).unwrap();
             let mut file = archive.by_index(0).unwrap();
 
             let mut tool_path = paths::tools_dir();
-            let exe_name = tool_identifier_to_exe_name(source, &version);
+            let exe_name = tool_identifier_to_exe_name(tool, &version);
             tool_path.push(exe_name);
 
             let mut output = BufWriter::new(File::create(&tool_path).unwrap());
@@ -135,16 +138,15 @@ impl ToolCache {
             }
 
             log::trace!("Updating tool cache");
-            let mut cache = Self::load().unwrap();
-            let tool = cache.tools.entry(CiString(source.to_owned())).or_default();
-            tool.versions.insert(version.clone());
-            cache.save().unwrap();
+            let tool_entry = self.tools.entry(tool.cache_key()).or_default();
+            tool_entry.versions.insert(version.clone());
+            self.save().unwrap();
 
             Some(version)
         } else {
             log::error!(
                 "No compatible version of {} was found for version requirement {}",
-                source,
+                tool.source(),
                 version_req
             );
 
@@ -176,8 +178,8 @@ pub struct ToolEntry {
     pub versions: BTreeSet<Version>,
 }
 
-fn tool_identifier_to_exe_name(source: &str, version: &Version) -> String {
-    let mut name = format!("{}-{}{}", source, version, EXE_SUFFIX);
+fn tool_identifier_to_exe_name(tool: &ToolSpec, version: &Version) -> String {
+    let mut name = format!("{}-{}{}", tool.cache_key().0, version, EXE_SUFFIX);
     name = name.replace('/', "__");
     name.replace('\\', "__")
 }

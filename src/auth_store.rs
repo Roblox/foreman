@@ -11,6 +11,7 @@ pub static DEFAULT_AUTH_CONFIG: &str = include_str!("../resources/default-auth.t
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AuthStore {
     pub github: Option<String>,
+    pub gitlab: Option<String>,
 }
 
 impl AuthStore {
@@ -21,9 +22,16 @@ impl AuthStore {
             Ok(contents) => {
                 let store: AuthStore = toml::from_slice(&contents).unwrap();
 
+                let mut found_credentials = false;
                 if store.github.is_some() {
                     log::debug!("Found GitHub credentials");
-                } else {
+                    found_credentials = true;
+                }
+                if store.gitlab.is_some() {
+                    log::debug!("Found GitLab credentials");
+                    found_credentials = true;
+                }
+                if !found_credentials {
                     log::debug!("Found no credentials");
                 }
 
@@ -40,6 +48,14 @@ impl AuthStore {
     }
 
     pub fn set_github_token(token: &str) -> io::Result<()> {
+        Self::set_token("github", token)
+    }
+
+    pub fn set_gitlab_token(token: &str) -> io::Result<()> {
+        Self::set_token("gitlab", token)
+    }
+
+    fn set_token(key: &str, token: &str) -> io::Result<()> {
         let contents = match fs::read_to_string(paths::auth_store()) {
             Ok(contents) => contents,
             Err(err) => {
@@ -52,7 +68,7 @@ impl AuthStore {
         };
 
         let mut store: Document = contents.parse().unwrap();
-        store["github"] = value(token);
+        store[key] = value(token);
 
         let serialized = store.to_string();
         fs::write(paths::auth_store(), serialized)
