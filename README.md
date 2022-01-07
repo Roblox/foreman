@@ -4,11 +4,11 @@
 [![Actions Status](https://github.com/Roblox/foreman/workflows/CI/badge.svg)](https://github.com/Roblox/foreman/actions?query=workflow%3ACI)
 [![Latest Release on crates.io](https://img.shields.io/crates/v/foreman.svg?label=latest%20release)](https://crates.io/crates/foreman)
 
-Foreman is a toolchain manager to help Roblox developers manage their installations of tools like [Rojo](https://github.com/rojo-rbx/rojo), [Remodel](https://github.com/rojo-rbx/remodel), [Tarmac](https://github.com/rojo-rbx/tarmac), and [Selene](https://github.com/Kampfkarren/selene).
+Foreman is a toolchain manager to help Roblox developers manage their installations of tools like [Rojo](https://github.com/rojo-rbx/rojo), [Remodel](https://github.com/rojo-rbx/remodel), [Tarmac](https://github.com/rojo-rbx/tarmac), [DarkLua](https://gitlab.com/seaofvoices/darklua), [StyLua](https://github.com/JohnnyMorganz/StyLua), and [Selene](https://github.com/Kampfkarren/selene).
 
 Foreman is inspired by [rustup](https://rustup.rs) and [asdf](https://github.com/asdf-vm/asdf).
 
-It's an early prototype, but feedback at this stage is welcome!
+It's used in production across hundreds of engineers, but more feedback is welcome!
 
 ## Installation
 
