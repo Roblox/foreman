@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 verify_tool_version () {
     echo "verify tool" $1
