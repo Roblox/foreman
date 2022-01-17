@@ -6,11 +6,11 @@ verify_tool_version () {
     echo "verify tool" $1
     TOOL_VERSION=$($1 -V)
 
-    if [[ $TOOL_VERSION != "$1 $2" ]]; then
+    if [ $TOOL_VERSION = "$1 $2" ]; then
+        echo $1 "is there!"
+    else
         echo "version did not match:" $TOOL_VERSION
         exit 1
-    else
-        echo $1 "is there!"
     fi
 }
 
