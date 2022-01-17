@@ -39,28 +39,16 @@ impl ToolInvocation {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let app = Options::from_args();
+    paths::create()?;
 
-    {
-        let log_filter = match app.verbose {
-            0 => "warn,foreman=info",
-            1 => "info,foreman=debug",
-            2 => "info,foreman=trace",
-            _ => "trace",
-        };
-
-        let env = env_logger::Env::default().default_filter_or(log_filter);
-
+    if let Some(invocation) = ToolInvocation::from_env() {
+        let env = env_logger::Env::new().default_filter_or("foreman=info");
         env_logger::Builder::from_env(env)
             .format_module_path(false)
             .format_timestamp(None)
             .format_indent(Some(8))
             .init();
-    }
 
-    paths::create()?;
-
-    if let Some(invocation) = ToolInvocation::from_env() {
         let config = ConfigFile::aggregate()?;
 
         if let Some(tool_spec) = config.tools.get(&invocation.name) {
@@ -144,6 +132,23 @@ struct GitLabAuthCommand {
 
 fn actual_main() -> io::Result<()> {
     let options = Options::from_args();
+
+    {
+        let log_filter = match options.verbose {
+            0 => "warn,foreman=info",
+            1 => "info,foreman=debug",
+            2 => "info,foreman=trace",
+            _ => "trace",
+        };
+
+        let env = env_logger::Env::default().default_filter_or(log_filter);
+
+        env_logger::Builder::from_env(env)
+            .format_module_path(false)
+            .format_timestamp(None)
+            .format_indent(Some(8))
+            .init();
+    }
 
     match options.subcommand {
         Subcommand::Install => {
