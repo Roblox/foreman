@@ -51,4 +51,6 @@ jobs:
     - name: End-to-end tests
       run: |
         cargo install --path .
+        foreman --version
+        PATH=$PATH:~/.foreman/bin
         ./scripts/end-to-end-tests.sh

@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 set -e
 
-function verify_tool_version {
+verify_tool_version () {
     echo "verify tool" $1
     TOOL_VERSION=$($1 -V)
 
@@ -14,12 +14,12 @@ function verify_tool_version {
     fi
 }
 
-function write_foreman_toml {
+write_foreman_toml () {
     echo "[tools]" > foreman.toml
     echo "$2 = { $1 = \"$3\", version = \"=$4\" }" >> foreman.toml
 }
 
-function verify_github_tool {
+verify_github_tool () {
     write_foreman_toml github $1 $2 $3
     foreman install
     verify_tool_version $1 $3
@@ -32,7 +32,7 @@ function verify_github_tool {
     rm foreman.toml
 }
 
-function verify_gitlab_tool {
+verify_gitlab_tool () {
     write_foreman_toml gitlab $1 $2 $3
     foreman install
     verify_tool_version $1 $3
