@@ -16,7 +16,7 @@ It's used in production across hundreds of engineers, but more feedback is welco
 You can download pre-built Foreman releases for Windows, macOS, and Linux from the [Releases](https://github.com/Roblox/foreman/releases) page.
 
 ### GitHub Actions
-You can use the official [setup-foreman](https://github.com/rojo-rbx/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
+You can use the official [setup-foreman](https://github.com/Roblox/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
 
 ### From Source
 If you have [Rust](https://www.rust-lang.org/) 1.42.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
