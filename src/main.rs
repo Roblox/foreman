@@ -10,10 +10,12 @@ mod tool_provider;
 
 use std::{env, error::Error, io, process};
 
+use paths::ForemanPaths;
 use structopt::StructOpt;
 
 use crate::{
     aliaser::add_self_alias, auth_store::AuthStore, config::ConfigFile, tool_cache::ToolCache,
+    tool_provider::ToolProvider,
 };
 
 #[derive(Debug)]
@@ -39,7 +41,9 @@ impl ToolInvocation {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    paths::create()?;
+    let paths = ForemanPaths::from_env().unwrap_or_default();
+
+    paths.create_all()?;
 
     if let Some(invocation) = ToolInvocation::from_env() {
         let env = env_logger::Env::new().default_filter_or("foreman=info");
@@ -49,16 +53,17 @@ fn main() -> Result<(), Box<dyn Error>> {
             .format_indent(Some(8))
             .init();
 
-        let config = ConfigFile::aggregate()?;
+        let config = ConfigFile::aggregate(&paths)?;
 
         if let Some(tool_spec) = config.tools.get(&invocation.name) {
             log::debug!("Found tool spec {}", tool_spec);
 
-            let mut tool_cache = ToolCache::load()?;
-            let maybe_version = tool_cache.download_if_necessary(tool_spec);
+            let mut tool_cache = ToolCache::load(&paths)?;
+            let providers = ToolProvider::new(&paths);
+            let maybe_version = tool_cache.download_if_necessary(tool_spec, &providers);
 
             if let Some(version) = maybe_version {
-                let exit_code = ToolCache::run(tool_spec, &version, invocation.args);
+                let exit_code = tool_cache.run(tool_spec, &version, invocation.args);
 
                 if exit_code != 0 {
                     process::exit(exit_code);
@@ -77,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    actual_main()?;
+    actual_main(paths)?;
     Ok(())
 }
 
@@ -130,7 +135,7 @@ struct GitLabAuthCommand {
     token: Option<String>,
 }
 
-fn actual_main() -> io::Result<()> {
+fn actual_main(paths: ForemanPaths) -> io::Result<()> {
     let options = Options::from_args();
 
     {
@@ -152,21 +157,33 @@ fn actual_main() -> io::Result<()> {
 
     match options.subcommand {
         Subcommand::Install => {
-            let config = ConfigFile::aggregate()?;
+            let config = ConfigFile::aggregate(&paths)?;
 
             log::trace!("Installing from gathered config: {:#?}", config);
 
-            let mut cache = ToolCache::load()?;
+            let mut cache = ToolCache::load(&paths)?;
 
             for (tool_alias, tool_spec) in &config.tools {
-                cache.download_if_necessary(tool_spec);
-                add_self_alias(tool_alias);
+                let providers = ToolProvider::new(&paths);
+                cache.download_if_necessary(tool_spec, &providers);
+                add_self_alias(tool_alias, &paths.bin_dir());
+            }
+
+            if config.tools.is_empty() {
+                log::info!(
+                    concat!(
+                        "foreman did not find any tools to install.\n\n",
+                        "You can define system-wide tools in:\n  {}\n",
+                        "or create a 'foreman.toml' file in your project directory.",
+                    ),
+                    paths.user_config().display()
+                );
             }
         }
         Subcommand::List => {
             println!("Installed tools:");
 
-            let cache = ToolCache::load()?;
+            let cache = ToolCache::load(&paths)?;
 
             for (tool_source, tool) in &cache.tools {
                 println!("  {}", tool_source);
@@ -183,7 +200,7 @@ fn actual_main() -> io::Result<()> {
                     "https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line",
                 )?;
 
-            AuthStore::set_github_token(&token)?;
+            AuthStore::set_github_token(&paths.auth_store(), &token)?;
 
             println!("GitHub auth saved successfully.");
         }
@@ -194,7 +211,7 @@ fn actual_main() -> io::Result<()> {
                 "https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
             )?;
 
-            AuthStore::set_gitlab_token(&token)?;
+            AuthStore::set_gitlab_token(&paths.auth_store(), &token)?;
 
             println!("GitLab auth saved successfully.");
         }

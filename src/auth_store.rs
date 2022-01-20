@@ -1,9 +1,9 @@
-use std::io;
+use std::{io, path::Path};
 
 use serde::{Deserialize, Serialize};
 use toml_edit::{value, Document};
 
-use crate::{fs, paths};
+use crate::fs;
 
 pub static DEFAULT_AUTH_CONFIG: &str = include_str!("../resources/default-auth.toml");
 
@@ -15,10 +15,10 @@ pub struct AuthStore {
 }
 
 impl AuthStore {
-    pub fn load() -> io::Result<Self> {
+    pub fn load(path: &Path) -> io::Result<Self> {
         log::debug!("Loading auth store...");
 
-        match fs::read(paths::auth_store()) {
+        match fs::read(path) {
             Ok(contents) => {
                 let store: AuthStore = toml::from_slice(&contents).unwrap();
 
@@ -39,24 +39,24 @@ impl AuthStore {
             }
             Err(err) => {
                 if err.kind() == io::ErrorKind::NotFound {
-                    return Ok(AuthStore::default());
+                    Ok(AuthStore::default())
                 } else {
-                    return Err(err);
+                    Err(err)
                 }
             }
         }
     }
 
-    pub fn set_github_token(token: &str) -> io::Result<()> {
-        Self::set_token("github", token)
+    pub fn set_github_token(auth_file: &Path, token: &str) -> io::Result<()> {
+        Self::set_token(auth_file, "github", token)
     }
 
-    pub fn set_gitlab_token(token: &str) -> io::Result<()> {
-        Self::set_token("gitlab", token)
+    pub fn set_gitlab_token(auth_file: &Path, token: &str) -> io::Result<()> {
+        Self::set_token(auth_file, "gitlab", token)
     }
 
-    fn set_token(key: &str, token: &str) -> io::Result<()> {
-        let contents = match fs::read_to_string(paths::auth_store()) {
+    fn set_token(auth_file: &Path, key: &str, token: &str) -> io::Result<()> {
+        let contents = match fs::read_to_string(auth_file) {
             Ok(contents) => contents,
             Err(err) => {
                 if err.kind() == io::ErrorKind::NotFound {
@@ -71,6 +71,6 @@ impl AuthStore {
         store[key] = value(token);
 
         let serialized = store.to_string();
-        fs::write(paths::auth_store(), serialized)
+        fs::write(auth_file, serialized)
     }
 }

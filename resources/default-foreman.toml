@@ -6,5 +6,5 @@
 # binaries are installed.
 
 [tools]
-# Put any tools you want to install here. To install Rojo 0.5.x, you'd use:
-# rojo = { source = "rojo-rbx/rojo", version = "0.5" }
+# Put any tools you want to install here. To install Rojo 7, you'd use:
+# rojo = { github = "rojo-rbx/rojo", version = "7.0.0" }
