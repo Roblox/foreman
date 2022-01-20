@@ -1,0 +1,24 @@
+---
+source: tests/cli.rs
+assertion_line: 90
+expression: content
+
+---
+foreman 1.0.3
+
+USAGE:
+    foreman.exe [FLAGS] <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+    -v               Logging verbosity. Supply multiple for more verbosity, up to -vvv
+
+SUBCOMMANDS:
+    github-auth    Set the GitHub Personal Access Token that Foreman should use with the GitHub API
+    gitlab-auth    Set the GitLab Personal Access Token that Foreman should use with the GitLab API
+    help           Prints this message or the help of the given subcommand(s)
+    install        Install tools defined by foreman.toml
+    list           List installed tools
+
+

@@ -28,3 +28,8 @@ toml = "0.5.6"
 toml_edit = "0.1.5"
 urlencoding = "2.1.0"
 zip = "0.5"
+
+[dev_dependencies]
+assert_cmd = "2.0.2"
+insta = "1.10.0"
+tempfile = "3.3.0"
