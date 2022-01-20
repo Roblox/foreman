@@ -150,6 +150,7 @@ fn actual_main(paths: ForemanPaths) -> io::Result<()> {
 
         env_logger::Builder::from_env(env)
             .format_module_path(false)
+            .format_target(false)
             .format_timestamp(None)
             .format_indent(Some(8))
             .init();
