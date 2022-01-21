@@ -50,7 +50,11 @@ impl ToolCache {
         status.code().unwrap_or(1)
     }
 
-    pub fn download_if_necessary(&mut self, tool: &ToolSpec, providers: &ToolProvider) -> Option<Version> {
+    pub fn download_if_necessary(
+        &mut self,
+        tool: &ToolSpec,
+        providers: &ToolProvider,
+    ) -> Option<Version> {
         if let Some(tool_entry) = self.tools.get(&tool.cache_key()) {
             log::debug!("Tool has some versions installed");
 
