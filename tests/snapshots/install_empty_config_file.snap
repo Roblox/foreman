@@ -1,6 +1,6 @@
 ---
 source: tests/cli.rs
-assertion_line: 90
+assertion_line: 91
 expression: content
 
 ---

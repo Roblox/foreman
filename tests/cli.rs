@@ -75,19 +75,21 @@ impl TestContext {
         root
     }
 
-    fn snapshot_command(&mut self) {
+    fn snapshot_command(&mut self, snapshot_name: &'static str) {
         let content = self.output();
-        self.snapshot_string(content);
+        self.snapshot_string(snapshot_name, content);
     }
 
-    fn snapshot_file<P: AsRef<Path>>(&self, file_path: P) {
+    fn snapshot_file<P: AsRef<Path>>(&self, snapshot_name: &'static str, file_path: P) {
         let content = read_to_string(file_path).expect("unable to read file");
-        self.snapshot_string(content);
+        self.snapshot_string(snapshot_name, content);
     }
 
-    fn snapshot_string(&self, content: String) {
+    fn snapshot_string(&self, snapshot_name: &'static str, content: String) {
         let content = content.replace(&self.home_directory_display, "{{FOREMAN_HOME}}");
-        assert_snapshot!(content);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(snapshot_name, content);
+        });
     }
 }
 
@@ -97,24 +99,31 @@ fn write_file(path: &Path, content: &str) {
 
 #[test]
 fn snapshot_help_command() {
-    TestContext::foreman().arg("help").snapshot_command();
+    TestContext::foreman()
+        .arg("help")
+        .snapshot_command("help_command");
 }
 
 #[test]
 fn snapshot_install_no_tools_found() {
-    TestContext::foreman().arg("install").snapshot_command();
+    TestContext::foreman()
+        .arg("install")
+        .snapshot_command("install_no_tools");
 }
 
 #[test]
 fn snapshot_install_default_foreman_toml() {
     let context = TestContext::foreman().arg("install").expect_success();
-    context.snapshot_file(context.path_from_home("foreman.toml"));
+    context.snapshot_file(
+        "default_foreman_toml",
+        context.path_from_home("foreman.toml"),
+    );
 }
 
 #[test]
 fn snapshot_install_default_auth_toml() {
     let context = TestContext::foreman().arg("install").expect_success();
-    context.snapshot_file(context.path_from_home("auth.toml"));
+    context.snapshot_file("default_auth_toml", context.path_from_home("auth.toml"));
 }
 
 #[test]
@@ -122,7 +131,7 @@ fn snapshot_install_empty_configuration_file() {
     let mut context = TestContext::foreman().arg("install");
     let config_path = context.path_from_working_directory("foreman.toml");
     write_file(&config_path, "");
-    context.snapshot_command();
+    context.snapshot_command("install_empty_config_file");
 }
 
 #[test]
@@ -136,5 +145,5 @@ fn snapshot_install_invalid_tool_configuration() {
 tool = { invalid = "roblox/tooling", version = "0.0.0" }
         "#,
     );
-    context.snapshot_command();
+    context.snapshot_command("install_invalid_tool_configuration");
 }
