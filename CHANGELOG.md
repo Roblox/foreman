@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-## 1.0.3 (2022-01-06)
+- Add environment variable to override Foreman home directory ([#39](https://github.com/Roblox/foreman/pull/39))
 - Support tools hosted on GitLab ([#31](https://github.com/Roblox/foreman/pull/31))
   - Updated config format to support both GitHub and GitLab tools
   - Added `foreman gitlab-auth` command for authenticating with GitLab.
