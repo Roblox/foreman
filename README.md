@@ -19,7 +19,7 @@ You can download pre-built Foreman releases for Windows, macOS, and Linux from t
 You can use the official [setup-foreman](https://github.com/rojo-rbx/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
 
 ### From Source
-If you have [Rust](https://www.rust-lang.org/) 1.42.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
+If you have [Rust](https://www.rust-lang.org/) 1.53.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
 
 ```bash
 cargo install foreman
