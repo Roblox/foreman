@@ -86,7 +86,10 @@ impl TestContext {
     }
 
     fn snapshot_string(&self, snapshot_name: &'static str, content: String) {
-        let content = content.replace(&self.home_directory_display, "{{FOREMAN_HOME}}");
+        let content = content
+            .replace(&self.home_directory_display, "{{FOREMAN_HOME}}")
+            .replace("foreman.exe", "foreman")
+            .replace("src\\", "src/");
         insta::with_settings!({prepend_module_to_snapshot => false}, {
             assert_snapshot!(snapshot_name, content);
         });

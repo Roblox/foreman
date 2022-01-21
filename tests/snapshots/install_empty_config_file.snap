@@ -1,9 +1,9 @@
 ---
 source: tests/cli.rs
-assertion_line: 91
+assertion_line: 94
 expression: content
 
 ---
-thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Error { inner: ErrorInner { kind: Custom, line: None, col: 0, at: None, message: "missing field `tools`", key: [] } }', src\config.rs:97:69
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Error { inner: ErrorInner { kind: Custom, line: None, col: 0, at: None, message: "missing field `tools`", key: [] } }', src/config.rs:97:69
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 
