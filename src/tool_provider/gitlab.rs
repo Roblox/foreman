@@ -6,12 +6,20 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::auth_store::AuthStore;
+use crate::{auth_store::AuthStore, paths::ForemanPaths};
 
 use super::{Release, ReleaseAsset, ToolProviderImpl};
 
 #[derive(Debug, Default)]
-pub struct GitlabProvider {}
+pub struct GitlabProvider {
+    paths: ForemanPaths,
+}
+
+impl GitlabProvider {
+    pub fn new(paths: ForemanPaths) -> Self {
+        Self { paths }
+    }
+}
 
 impl ToolProviderImpl for GitlabProvider {
     fn get_releases(&self, repo: &str) -> reqwest::Result<Vec<Release>> {
@@ -25,7 +33,7 @@ impl ToolProviderImpl for GitlabProvider {
         );
         let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
 
-        let auth_store = AuthStore::load().unwrap();
+        let auth_store = AuthStore::load(&self.paths.auth_store()).unwrap();
         if let Some(token) = &auth_store.gitlab {
             builder = builder.header("PRIVATE-TOKEN", token);
         }
@@ -54,7 +62,7 @@ impl ToolProviderImpl for GitlabProvider {
             // release asset instead of JSON metadata about the release.
             .header(ACCEPT, "application/octet-stream");
 
-        let auth_store = AuthStore::load().unwrap();
+        let auth_store = AuthStore::load(&self.paths.auth_store()).unwrap();
         if let Some(token) = &auth_store.gitlab {
             builder = builder.header("PRIVATE-TOKEN", token);
         }

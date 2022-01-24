@@ -6,12 +6,20 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::auth_store::AuthStore;
+use crate::{auth_store::AuthStore, paths::ForemanPaths};
 
 use super::{Release, ReleaseAsset, ToolProviderImpl};
 
-#[derive(Debug, Default)]
-pub struct GithubProvider {}
+#[derive(Debug)]
+pub struct GithubProvider {
+    paths: ForemanPaths,
+}
+
+impl GithubProvider {
+    pub fn new(paths: ForemanPaths) -> Self {
+        Self { paths }
+    }
+}
 
 impl ToolProviderImpl for GithubProvider {
     fn get_releases(&self, repo: &str) -> reqwest::Result<Vec<Release>> {
@@ -22,7 +30,7 @@ impl ToolProviderImpl for GithubProvider {
         let url = format!("https://api.github.com/repos/{}/releases", repo);
         let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
 
-        let auth_store = AuthStore::load().unwrap();
+        let auth_store = AuthStore::load(&self.paths.auth_store()).unwrap();
         if let Some(token) = &auth_store.github {
             builder = builder.header(AUTHORIZATION, format!("token {}", token));
         }
@@ -52,7 +60,7 @@ impl ToolProviderImpl for GithubProvider {
             // release asset instead of JSON metadata about the release.
             .header(ACCEPT, "application/octet-stream");
 
-        let auth_store = AuthStore::load().unwrap();
+        let auth_store = AuthStore::load(&self.paths.auth_store()).unwrap();
         if let Some(token) = &auth_store.github {
             builder = builder.header(AUTHORIZATION, format!("token {}", token));
         }

@@ -15,42 +15,46 @@ use crate::{
     ci_string::CiString,
     config::ToolSpec,
     fs::{self, File},
-    paths,
+    paths::ForemanPaths,
     tool_provider::ToolProvider,
 };
-
-fn index_file() -> PathBuf {
-    let mut path = paths::base_dir();
-    path.push("tool-cache.json");
-    path
-}
 
 /// Contains the current state of all of the tools that Foreman manages.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct ToolCache {
     pub tools: HashMap<CiString, ToolEntry>,
     #[serde(skip)]
-    providers: ToolProvider,
+    paths: ForemanPaths,
 }
 
 impl ToolCache {
     #[must_use]
-    pub fn run(tool: &ToolSpec, version: &Version, args: Vec<String>) -> i32 {
+    pub fn run(&self, tool: &ToolSpec, version: &Version, args: Vec<String>) -> i32 {
         log::debug!("Running tool {}", tool);
 
-        let mut tool_path = paths::tools_dir();
-        let exe_name = tool_identifier_to_exe_name(tool, version);
-        tool_path.push(exe_name);
+        let tool_path = self.get_tool_exe_path(tool, version);
 
-        let status = process::Command::new(tool_path)
+        let status = process::Command::new(&tool_path)
             .args(args)
             .status()
+            .map_err(|e| {
+                format!(
+                    "an error happened trying to run `{}` at `{}`: {}\n\nThis is an error in Foreman.",
+                    tool,
+                    tool_path.display(),
+                    e
+                )
+            })
             .unwrap();
 
         status.code().unwrap_or(1)
     }
 
-    pub fn download_if_necessary(&mut self, tool: &ToolSpec) -> Option<Version> {
+    pub fn download_if_necessary(
+        &mut self,
+        tool: &ToolSpec,
+        providers: &ToolProvider,
+    ) -> Option<Version> {
         if let Some(tool_entry) = self.tools.get(&tool.cache_key()) {
             log::debug!("Tool has some versions installed");
 
@@ -65,13 +69,13 @@ impl ToolCache {
             }
         }
 
-        self.download(tool)
+        self.download(tool, providers)
     }
 
-    pub fn download(&mut self, tool: &ToolSpec) -> Option<Version> {
+    pub fn download(&mut self, tool: &ToolSpec, providers: &ToolProvider) -> Option<Version> {
         log::info!("Downloading {}", tool);
 
-        let provider = self.providers.get(&tool.provider());
+        let provider = providers.get(&tool.provider());
         let releases = provider.get_releases(tool.source()).unwrap();
 
         // Filter down our set of releases to those that are valid versions and
@@ -122,9 +126,7 @@ impl ToolCache {
             let mut archive = ZipArchive::new(Cursor::new(&buffer)).unwrap();
             let mut file = archive.by_index(0).unwrap();
 
-            let mut tool_path = paths::tools_dir();
-            let exe_name = tool_identifier_to_exe_name(tool, &version);
-            tool_path.push(exe_name);
+            let tool_path = self.get_tool_exe_path(tool, &version);
 
             let mut output = BufWriter::new(File::create(&tool_path).unwrap());
             io::copy(&mut file, &mut output).unwrap();
@@ -154,8 +156,8 @@ impl ToolCache {
         }
     }
 
-    pub fn load() -> io::Result<Self> {
-        match fs::read(index_file()) {
+    pub fn load(paths: &ForemanPaths) -> io::Result<Self> {
+        match fs::read(paths.index_file()) {
             Ok(contents) => Ok(serde_json::from_slice(&contents).unwrap()),
             Err(err) => {
                 if err.kind() == io::ErrorKind::NotFound {
@@ -165,11 +167,28 @@ impl ToolCache {
                 }
             }
         }
+        .map(|mut tool_cache: ToolCache| {
+            tool_cache.paths = paths.clone();
+            tool_cache
+        })
     }
 
     fn save(&self) -> io::Result<()> {
         let serialized = serde_json::to_string_pretty(self).unwrap();
-        fs::write(index_file(), serialized)
+        fs::write(self.index_file(), serialized)
+    }
+
+    fn get_tool_exe_path(&self, tool: &ToolSpec, version: &Version) -> PathBuf {
+        let mut tool_path = self.paths.tools_dir();
+        let exe_name = tool_identifier_to_exe_name(tool, version);
+        tool_path.push(exe_name);
+        tool_path
+    }
+
+    fn index_file(&self) -> PathBuf {
+        let mut path = self.paths.root_dir();
+        path.push("tool-cache.json");
+        path
     }
 }
 

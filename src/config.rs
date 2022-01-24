@@ -3,12 +3,7 @@ use std::{collections::HashMap, env, fmt, io};
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
-use crate::{ci_string::CiString, fs, paths, tool_provider::Provider};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ConfigFile {
-    pub tools: HashMap<String, ToolSpec>,
-}
+use crate::{ci_string::CiString, fs, paths::ForemanPaths, tool_provider::Provider};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -70,6 +65,11 @@ impl fmt::Display for ToolSpec {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ConfigFile {
+    pub tools: HashMap<String, ToolSpec>,
+}
+
 impl ConfigFile {
     pub fn new() -> Self {
         Self {
@@ -79,13 +79,11 @@ impl ConfigFile {
 
     fn fill_from(&mut self, other: ConfigFile) {
         for (tool_name, tool_source) in other.tools {
-            if !self.tools.contains_key(&tool_name) {
-                self.tools.insert(tool_name, tool_source);
-            }
+            self.tools.entry(tool_name).or_insert(tool_source);
         }
     }
 
-    pub fn aggregate() -> io::Result<ConfigFile> {
+    pub fn aggregate(paths: &ForemanPaths) -> io::Result<ConfigFile> {
         let mut config = ConfigFile::new();
 
         let base_dir = env::current_dir()?;
@@ -97,6 +95,10 @@ impl ConfigFile {
             match fs::read(&config_path) {
                 Ok(contents) => {
                     let config_source = toml::from_slice(&contents).unwrap();
+                    log::debug!(
+                        "aggregating content from config file at {}",
+                        config_path.display()
+                    );
                     config.fill_from(config_source);
                 }
                 Err(err) => {
@@ -113,10 +115,14 @@ impl ConfigFile {
             }
         }
 
-        let home_config_path = paths::user_config();
+        let home_config_path = paths.user_config();
         match fs::read(&home_config_path) {
             Ok(contents) => {
                 let config_source = toml::from_slice(&contents).unwrap();
+                log::debug!(
+                    "aggregating content from config file at {}",
+                    home_config_path.display()
+                );
                 config.fill_from(config_source);
             }
             Err(err) => {

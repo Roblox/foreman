@@ -1,0 +1,9 @@
+---
+source: tests/cli.rs
+assertion_line: 94
+expression: content
+
+---
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Error { inner: ErrorInner { kind: Custom, line: Some(1), col: 0, at: Some(1), message: "data did not match any variant of untagged enum ToolSpec", key: ["tools", "tool"] } }', src/config.rs:97:69
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+

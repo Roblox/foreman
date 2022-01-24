@@ -1,3 +1,9 @@
+---
+source: tests/cli.rs
+assertion_line: 91
+expression: content
+
+---
 # This is Foreman's configuration file. You can edit it to tell Foreman about
 # new tools that you'd like to install, or to change versions of tools you
 # already have.
@@ -8,3 +14,4 @@
 [tools]
 # Put any tools you want to install here. To install Rojo 7, you'd use:
 # rojo = { github = "rojo-rbx/rojo", version = "7.0.0" }
+

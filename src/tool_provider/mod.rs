@@ -6,6 +6,8 @@ use std::{collections::HashMap, fmt};
 use github::GithubProvider;
 use gitlab::GitlabProvider;
 
+use crate::paths::ForemanPaths;
+
 pub trait ToolProviderImpl: fmt::Debug {
     fn get_releases(&self, repo: &str) -> reqwest::Result<Vec<Release>>;
 
@@ -36,16 +38,20 @@ pub struct ToolProvider {
     providers: HashMap<Provider, Box<dyn ToolProviderImpl>>,
 }
 
-impl Default for ToolProvider {
-    fn default() -> Self {
+impl ToolProvider {
+    pub fn new(paths: &ForemanPaths) -> Self {
         let mut providers: HashMap<Provider, Box<dyn ToolProviderImpl>> = HashMap::default();
-        providers.insert(Provider::Github, Box::new(GithubProvider::default()));
-        providers.insert(Provider::Gitlab, Box::new(GitlabProvider::default()));
+        providers.insert(
+            Provider::Github,
+            Box::new(GithubProvider::new(paths.clone())),
+        );
+        providers.insert(
+            Provider::Gitlab,
+            Box::new(GitlabProvider::new(paths.clone())),
+        );
         Self { providers }
     }
-}
 
-impl ToolProvider {
     pub fn get(&self, provider: &Provider) -> &dyn ToolProviderImpl {
         self.providers
             .get(provider)

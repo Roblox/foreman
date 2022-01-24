@@ -1,0 +1,12 @@
+---
+source: tests/cli.rs
+assertion_line: 91
+expression: content
+
+---
+[INFO ] foreman did not find any tools to install.
+        
+        You can define system-wide tools in:
+          {{FOREMAN_HOME}}foreman.toml
+        or create a 'foreman.toml' file in your project directory.
+

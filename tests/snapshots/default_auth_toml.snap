@@ -1,0 +1,25 @@
+---
+source: tests/cli.rs
+assertion_line: 91
+expression: content
+
+---
+# This is where Foreman stores authentication information for sources.
+
+# For authenticating with GitHub.com, put a personal access token here under the
+# `github` key. This is useful if you hit GitHub API rate limits or if you need
+# to access private tools.
+
+# github = "YOUR_TOKEN_HERE"
+
+# For authenticating with GitLab.com, put a personal access token here under the
+# `gitlab` key. This is useful if you hit GitLab API rate limits or if you need
+# to access private tools.
+
+# gitlab = "YOUR_TOKEN_HERE"
+
+# You can also run `foreman github-auth` to update this file, optionally passing
+# the token as the first argument.
+
+# In order to use sources from private repositories, this token will need "repo"
+# permissions granted to it and potentially SSO authorization.
