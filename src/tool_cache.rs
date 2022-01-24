@@ -39,7 +39,7 @@ impl ToolCache {
             .status()
             .map_err(|e| {
                 format!(
-                    "an error happened trying to run `{}` at `{}`: {}",
+                    "an error happened trying to run `{}` at `{}`: {}\n\nThis is an error in Foreman.",
                     tool,
                     tool_path.display(),
                     e
