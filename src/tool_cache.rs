@@ -1,7 +1,7 @@
 use std::{
     collections::{BTreeSet, HashMap},
     env::consts::EXE_SUFFIX,
-    io::{self, BufWriter, Cursor},
+    io::Cursor,
     path::PathBuf,
     process,
 };
@@ -14,7 +14,8 @@ use crate::{
     artifact_choosing::platform_keywords,
     ci_string::CiString,
     config::ToolSpec,
-    fs::{self, File},
+    error::{ForemanError, ForemanResult},
+    fs,
     paths::ForemanPaths,
     tool_provider::ToolProvider,
 };
@@ -28,33 +29,32 @@ pub struct ToolCache {
 }
 
 impl ToolCache {
-    #[must_use]
-    pub fn run(&self, tool: &ToolSpec, version: &Version, args: Vec<String>) -> i32 {
-        log::debug!("Running tool {}", tool);
-
+    pub fn run(&self, tool: &ToolSpec, version: &Version, args: Vec<String>) -> ForemanResult<i32> {
         let tool_path = self.get_tool_exe_path(tool, version);
+
+        log::debug!("Running tool {} ({})", tool, tool_path.display());
 
         let status = process::Command::new(&tool_path)
             .args(args)
             .status()
-            .map_err(|e| {
-                format!(
-                    "an error happened trying to run `{}` at `{}`: {}\n\nThis is an error in Foreman.",
-                    tool,
-                    tool_path.display(),
-                    e
+            .map_err(|err| {
+                ForemanError::io_error_with_context(err,
+                    format!(
+                        "an error happened trying to run `{}` at `{}` (this is an error in Foreman)",
+                        tool,
+                        tool_path.display()
+                    )
                 )
-            })
-            .unwrap();
+            })?;
 
-        status.code().unwrap_or(1)
+        Ok(status.code().unwrap_or(1))
     }
 
     pub fn download_if_necessary(
         &mut self,
         tool: &ToolSpec,
         providers: &ToolProvider,
-    ) -> Option<Version> {
+    ) -> ForemanResult<Version> {
         if let Some(tool_entry) = self.tools.get(&tool.cache_key()) {
             log::debug!("Tool has some versions installed");
 
@@ -65,18 +65,22 @@ impl ToolCache {
                 .find(|version| tool.version().matches(version));
 
             if let Some(version) = matching_version {
-                return Some(version.clone());
+                return Ok(version.clone());
             }
         }
 
         self.download(tool, providers)
     }
 
-    pub fn download(&mut self, tool: &ToolSpec, providers: &ToolProvider) -> Option<Version> {
+    pub fn download(
+        &mut self,
+        tool: &ToolSpec,
+        providers: &ToolProvider,
+    ) -> ForemanResult<Version> {
         log::info!("Downloading {}", tool);
 
         let provider = providers.get(&tool.provider());
-        let releases = provider.get_releases(tool.source()).unwrap();
+        let releases = provider.get_releases(tool.source())?;
 
         // Filter down our set of releases to those that are valid versions and
         // have release assets for our current platform.
@@ -113,68 +117,76 @@ impl ToolCache {
 
         let version_req = tool.version();
         let matching_release = semver_releases
-            .into_iter()
+            .iter()
             .find(|(version, _asset_index, _release)| version_req.matches(version));
 
         if let Some((version, asset_index, release)) = matching_release {
             log::trace!("Picked version {}", version);
 
-            let url = &release.assets[asset_index].url;
-            let buffer = provider.download_asset(url).unwrap();
+            let url = &release.assets[*asset_index].url;
+            let buffer = provider.download_asset(url)?;
 
             log::trace!("Extracting downloaded artifact");
-            let mut archive = ZipArchive::new(Cursor::new(&buffer)).unwrap();
-            let mut file = archive.by_index(0).unwrap();
+            let mut archive = ZipArchive::new(Cursor::new(&buffer)).map_err(|err| {
+                ForemanError::invalid_release_asset(
+                    tool,
+                    version,
+                    format!("unable to open zip archive ({})", err),
+                )
+            })?;
+            let mut file = archive.by_index(0).map_err(|err| {
+                ForemanError::invalid_release_asset(
+                    tool,
+                    version,
+                    format!("unable to obtain file from zip archive ({})", err),
+                )
+            })?;
 
-            let tool_path = self.get_tool_exe_path(tool, &version);
+            let tool_path = self.get_tool_exe_path(tool, version);
 
-            let mut output = BufWriter::new(File::create(&tool_path).unwrap());
-            io::copy(&mut file, &mut output).unwrap();
+            fs::copy_from_reader(&mut file, &tool_path)?;
 
             // On Unix systems, mark the tool as executable.
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
 
-                fs::set_permissions(&tool_path, fs::Permissions::from_mode(0o777)).unwrap();
+                fs::set_permissions(&tool_path, fs::Permissions::from_mode(0o777))?;
             }
 
             log::trace!("Updating tool cache");
             let tool_entry = self.tools.entry(tool.cache_key()).or_default();
             tool_entry.versions.insert(version.clone());
-            self.save().unwrap();
+            self.save()?;
 
-            Some(version)
+            Ok(version.clone())
         } else {
-            log::error!(
-                "No compatible version of {} was found for version requirement {}",
-                tool.source(),
-                version_req
-            );
-
-            None
+            Err(ForemanError::no_compatible_version_found(
+                tool,
+                semver_releases
+                    .into_iter()
+                    .map(|(version, _asset_index, _release)| version)
+                    .collect(),
+            ))
         }
     }
 
-    pub fn load(paths: &ForemanPaths) -> io::Result<Self> {
-        match fs::read(paths.index_file()) {
-            Ok(contents) => Ok(serde_json::from_slice(&contents).unwrap()),
-            Err(err) => {
-                if err.kind() == io::ErrorKind::NotFound {
-                    Ok(Default::default())
-                } else {
-                    Err(err)
-                }
-            }
-        }
-        .map(|mut tool_cache: ToolCache| {
-            tool_cache.paths = paths.clone();
-            tool_cache
-        })
+    pub fn load(paths: &ForemanPaths) -> ForemanResult<Self> {
+        let mut tool_cache = fs::try_read(paths.index_file())?
+            .map(|contents| {
+                serde_json::from_slice(&contents).map_err(|err| {
+                    ForemanError::tool_cache_parsing(paths.index_file(), err.to_string())
+                })
+            })
+            .unwrap_or_else(|| Ok(Self::default()))?;
+
+        tool_cache.paths = paths.clone();
+        Ok(tool_cache)
     }
 
-    fn save(&self) -> io::Result<()> {
-        let serialized = serde_json::to_string_pretty(self).unwrap();
+    fn save(&self) -> ForemanResult<()> {
+        let serialized =
+            serde_json::to_string_pretty(self).expect("unable to serialize tool cache");
         fs::write(self.index_file(), serialized)
     }
 

@@ -1,0 +1,23 @@
+---
+source: tests/cli.rs
+assertion_line: 101
+expression: content
+
+---
+[INFO ] Downloading github.com/JohnnyMorganz/StyLua@^0.11.3
+unable to parse Foreman authentication file (at {{FOREMAN_HOME}}auth.toml): expected an equals, found eof at line 1 column 8
+
+A Foreman authentication file looks like this:
+
+# For authenticating with GitHub.com, put a personal access token here under the
+# `github` key. This is useful if you hit GitHub API rate limits or if you need
+# to access private tools.
+
+github = "YOUR_TOKEN_HERE"
+
+# For authenticating with GitLab.com, put a personal access token here under the
+# `gitlab` key. This is useful if you hit GitLab API rate limits or if you need
+# to access private tools.
+
+gitlab = "YOUR_TOKEN_HERE"
+

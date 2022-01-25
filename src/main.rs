@@ -3,18 +3,23 @@ mod artifact_choosing;
 mod auth_store;
 mod ci_string;
 mod config;
+mod error;
 mod fs;
 mod paths;
 mod tool_cache;
 mod tool_provider;
 
-use std::{env, error::Error, io, process};
+use std::{env, ffi::OsStr, process};
 
 use paths::ForemanPaths;
 use structopt::StructOpt;
 
 use crate::{
-    aliaser::add_self_alias, auth_store::AuthStore, config::ConfigFile, tool_cache::ToolCache,
+    aliaser::add_self_alias,
+    auth_store::AuthStore,
+    config::ConfigFile,
+    error::{ForemanError, ForemanResult},
+    tool_cache::ToolCache,
     tool_provider::ToolProvider,
 };
 
@@ -25,65 +30,89 @@ struct ToolInvocation {
 }
 
 impl ToolInvocation {
-    fn from_env() -> Option<Self> {
-        let app_path = env::current_exe().unwrap();
-        let name = app_path.file_stem()?.to_str()?.to_owned();
+    fn from_env() -> ForemanResult<Option<Self>> {
+        let app_path = env::current_exe().map_err(|err| {
+            ForemanError::io_error_with_context(err, "unable to obtain foreman executable location")
+        })?;
+        let name = if let Some(name) = app_path
+            .file_stem()
+            .and_then(OsStr::to_str)
+            .map(ToOwned::to_owned)
+        {
+            name
+        } else {
+            return Ok(None);
+        };
 
         // That's us!
         if name == "foreman" {
-            return None;
+            return Ok(None);
         }
 
         let args = env::args().skip(1).collect();
 
-        Some(Self { name, args })
+        Ok(Some(Self { name, args }))
     }
-}
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let paths = ForemanPaths::from_env().unwrap_or_default();
+    fn run(self, paths: &ForemanPaths) -> ForemanResult<()> {
+        let config = ConfigFile::aggregate(paths)?;
 
-    paths.create_all()?;
-
-    if let Some(invocation) = ToolInvocation::from_env() {
-        let env = env_logger::Env::new().default_filter_or("foreman=info");
-        env_logger::Builder::from_env(env)
-            .format_module_path(false)
-            .format_timestamp(None)
-            .format_indent(Some(8))
-            .init();
-
-        let config = ConfigFile::aggregate(&paths)?;
-
-        if let Some(tool_spec) = config.tools.get(&invocation.name) {
+        if let Some(tool_spec) = config.tools.get(&self.name) {
             log::debug!("Found tool spec {}", tool_spec);
 
-            let mut tool_cache = ToolCache::load(&paths)?;
-            let providers = ToolProvider::new(&paths);
-            let maybe_version = tool_cache.download_if_necessary(tool_spec, &providers);
+            let mut tool_cache = ToolCache::load(paths)?;
+            let providers = ToolProvider::new(paths);
+            let version = tool_cache.download_if_necessary(tool_spec, &providers)?;
 
-            if let Some(version) = maybe_version {
-                let exit_code = tool_cache.run(tool_spec, &version, invocation.args);
+            let exit_code = tool_cache.run(tool_spec, &version, self.args)?;
 
-                if exit_code != 0 {
-                    process::exit(exit_code);
-                }
+            if exit_code != 0 {
+                process::exit(exit_code);
             }
 
-            return Ok(());
+            Ok(())
         } else {
             eprintln!(
                 "'{}' is not a known Foreman tool, but Foreman was invoked with its name.",
-                invocation.name
+                self.name
             );
             eprintln!("You may not have this tool installed here, or your install may be broken.");
 
-            return Ok(());
+            Ok(())
         }
     }
+}
 
-    actual_main(paths)?;
-    Ok(())
+fn main() {
+    let paths = ForemanPaths::from_env().unwrap_or_default();
+
+    if let Err(error) = paths.create_all() {
+        exit_with_error(error);
+    }
+
+    let result = ToolInvocation::from_env().and_then(|maybe_invocation| {
+        if let Some(invocation) = maybe_invocation {
+            let env = env_logger::Env::new().default_filter_or("foreman=info");
+            env_logger::Builder::from_env(env)
+                .format_module_path(false)
+                .format_timestamp(None)
+                .format_indent(Some(8))
+                .init();
+
+            invocation.run(&paths)
+        } else {
+            actual_main(paths)
+        }
+    });
+
+    if let Err(error) = result {
+        exit_with_error(error);
+    }
+}
+
+fn exit_with_error(error: ForemanError) -> ! {
+    eprintln!("{}", error);
+    process::exit(1);
 }
 
 #[derive(Debug, StructOpt)]
@@ -135,7 +164,7 @@ struct GitLabAuthCommand {
     token: Option<String>,
 }
 
-fn actual_main(paths: ForemanPaths) -> io::Result<()> {
+fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
     let options = Options::from_args();
 
     {
@@ -166,8 +195,8 @@ fn actual_main(paths: ForemanPaths) -> io::Result<()> {
 
             for (tool_alias, tool_spec) in &config.tools {
                 let providers = ToolProvider::new(&paths);
-                cache.download_if_necessary(tool_spec, &providers);
-                add_self_alias(tool_alias, &paths.bin_dir());
+                cache.download_if_necessary(tool_spec, &providers)?;
+                add_self_alias(tool_alias, &paths.bin_dir())?;
             }
 
             if config.tools.is_empty() {
@@ -221,7 +250,11 @@ fn actual_main(paths: ForemanPaths) -> io::Result<()> {
     Ok(())
 }
 
-fn prompt_auth_token(token: Option<String>, provider: &str, help: &str) -> io::Result<String> {
+fn prompt_auth_token(
+    token: Option<String>,
+    provider: &str,
+    help: &str,
+) -> Result<String, ForemanError> {
     match token {
         Some(token) => Ok(token),
         None => {
@@ -235,7 +268,13 @@ fn prompt_auth_token(token: Option<String>, provider: &str, help: &str) -> io::R
 
             loop {
                 let token =
-                    rpassword::read_password_from_tty(Some(&format!("{} Token: ", provider)))?;
+                    rpassword::read_password_from_tty(Some(&format!("{} Token: ", provider)))
+                        .map_err(|err| {
+                            ForemanError::io_error_with_context(
+                                err,
+                                "an error happened trying to read password",
+                            )
+                        })?;
 
                 if token.is_empty() {
                     println!("Token must be non-empty.");

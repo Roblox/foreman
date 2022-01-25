@@ -6,7 +6,11 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::{auth_store::AuthStore, paths::ForemanPaths};
+use crate::{
+    auth_store::AuthStore,
+    error::{ForemanError, ForemanResult},
+    paths::ForemanPaths,
+};
 
 use super::{Release, ReleaseAsset, ToolProviderImpl};
 
@@ -22,9 +26,7 @@ impl GitlabProvider {
 }
 
 impl ToolProviderImpl for GitlabProvider {
-    fn get_releases(&self, repo: &str) -> reqwest::Result<Vec<Release>> {
-        log::debug!("Downloading gitlab releases for {}", repo);
-
+    fn get_releases(&self, repo: &str) -> ForemanResult<Vec<Release>> {
         let client = Client::new();
 
         let url = format!(
@@ -33,26 +35,26 @@ impl ToolProviderImpl for GitlabProvider {
         );
         let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
 
-        let auth_store = AuthStore::load(&self.paths.auth_store()).unwrap();
+        let auth_store = AuthStore::load(&self.paths.auth_store())?;
         if let Some(token) = &auth_store.gitlab {
             builder = builder.header("PRIVATE-TOKEN", token);
         }
-        let response_body = builder.send()?.text()?;
 
-        let releases: Vec<GitlabRelease> = match serde_json::from_str(&response_body) {
-            Ok(releases) => releases,
-            Err(err) => {
-                log::error!("Unexpected GitLab API response: {}", response_body);
-                panic!("{}", err);
-            }
-        };
+        log::debug!("Downloading gitlab releases for {}", repo);
+        let response_body = builder
+            .send()
+            .map_err(ForemanError::request_failed)?
+            .text()
+            .map_err(ForemanError::request_failed)?;
+
+        let releases: Vec<GitlabRelease> = serde_json::from_str(&response_body).map_err(|err| {
+            ForemanError::unexpected_response_body(err.to_string(), response_body, url)
+        })?;
 
         Ok(releases.into_iter().map(Into::into).collect())
     }
 
-    fn download_asset(&self, url: &str) -> reqwest::Result<Vec<u8>> {
-        log::debug!("Downloading release asset {}", url);
-
+    fn download_asset(&self, url: &str) -> ForemanResult<Vec<u8>> {
         let client = Client::new();
 
         let mut builder = client
@@ -62,15 +64,18 @@ impl ToolProviderImpl for GitlabProvider {
             // release asset instead of JSON metadata about the release.
             .header(ACCEPT, "application/octet-stream");
 
-        let auth_store = AuthStore::load(&self.paths.auth_store()).unwrap();
+        let auth_store = AuthStore::load(&self.paths.auth_store())?;
         if let Some(token) = &auth_store.gitlab {
             builder = builder.header("PRIVATE-TOKEN", token);
         }
 
-        let mut response = builder.send()?;
+        log::debug!("Downloading release asset {}", url);
+        let mut response = builder.send().map_err(ForemanError::request_failed)?;
 
         let mut output = Vec::new();
-        response.copy_to(&mut output)?;
+        response
+            .copy_to(&mut output)
+            .map_err(ForemanError::request_failed)?;
         Ok(output)
     }
 }

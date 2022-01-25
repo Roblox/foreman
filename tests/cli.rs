@@ -13,6 +13,7 @@ struct TestContext {
     home_directory: TempDir,
     home_directory_display: String,
     working_directory: TempDir,
+    working_directory_display: String,
 }
 
 impl TestContext {
@@ -33,11 +34,17 @@ impl TestContext {
             home_directory.path().display(),
             std::path::MAIN_SEPARATOR
         );
+        let working_directory_display = format!(
+            "{}{}",
+            working_directory.path().display(),
+            std::path::MAIN_SEPARATOR
+        );
         Self {
             command,
             home_directory,
             home_directory_display,
             working_directory,
+            working_directory_display,
         }
     }
 
@@ -88,8 +95,8 @@ impl TestContext {
     fn snapshot_string(&self, snapshot_name: &'static str, content: String) {
         let content = content
             .replace(&self.home_directory_display, "{{FOREMAN_HOME}}")
-            .replace("foreman.exe", "foreman")
-            .replace("src\\", "src/");
+            .replace(&self.working_directory_display, "{{CWD}}")
+            .replace("foreman.exe", "foreman");
         insta::with_settings!({prepend_module_to_snapshot => false}, {
             assert_snapshot!(snapshot_name, content);
         });
@@ -149,4 +156,28 @@ tool = { invalid = "roblox/tooling", version = "0.0.0" }
         "#,
     );
     context.snapshot_command("install_invalid_tool_configuration");
+}
+
+#[test]
+fn snapshot_install_invalid_system_configuration_file() {
+    let mut context = TestContext::foreman().arg("install");
+    let config_path = context.path_from_home("foreman.toml");
+    write_file(&config_path, "invalid");
+    context.snapshot_command("install_invalid_system_configuration");
+}
+
+#[test]
+fn snapshot_install_invalid_auth_toml() {
+    let mut context = TestContext::foreman().arg("install");
+    let auth_path = context.path_from_home("auth.toml");
+    write_file(&auth_path, "invalid");
+    let config_path = context.path_from_working_directory("foreman.toml");
+    write_file(
+        &config_path,
+        r#"
+[tools]
+stylua = { github = "JohnnyMorganz/StyLua", version = "0.11.3" }
+    "#,
+    );
+    context.snapshot_command("install_invalid_auth_configuration");
 }
