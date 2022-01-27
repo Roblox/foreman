@@ -6,12 +6,12 @@ use std::{collections::HashMap, fmt};
 use github::GithubProvider;
 use gitlab::GitlabProvider;
 
-use crate::paths::ForemanPaths;
+use crate::{error::ForemanResult, paths::ForemanPaths};
 
 pub trait ToolProviderImpl: fmt::Debug {
-    fn get_releases(&self, repo: &str) -> reqwest::Result<Vec<Release>>;
+    fn get_releases(&self, repo: &str) -> ForemanResult<Vec<Release>>;
 
-    fn download_asset(&self, url: &str) -> reqwest::Result<Vec<u8>>;
+    fn download_asset(&self, url: &str) -> ForemanResult<Vec<u8>>;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

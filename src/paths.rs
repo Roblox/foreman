@@ -1,11 +1,8 @@
 //! Contains all of the paths that Foreman needs to deal with.
 
-use std::{
-    io,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
-use crate::{auth_store::DEFAULT_AUTH_CONFIG, fs};
+use crate::{auth_store::DEFAULT_AUTH_CONFIG, error::ForemanError, fs};
 
 static DEFAULT_USER_CONFIG: &str = include_str!("../resources/default-foreman.toml");
 
@@ -77,28 +74,16 @@ impl ForemanPaths {
         self.from_root("tool-cache.toml")
     }
 
-    pub fn create_all(&self) -> io::Result<()> {
+    pub fn create_all(&self) -> Result<(), ForemanError> {
         fs::create_dir_all(self.root_dir())?;
         fs::create_dir_all(self.bin_dir())?;
         fs::create_dir_all(self.tools_dir())?;
 
         let config = self.user_config();
-        if let Err(err) = fs::metadata(&config) {
-            if err.kind() == io::ErrorKind::NotFound {
-                fs::write(&config, DEFAULT_USER_CONFIG)?;
-            } else {
-                return Err(err);
-            }
-        }
+        fs::write_if_not_found(&config, DEFAULT_USER_CONFIG)?;
 
         let auth = self.auth_store();
-        if let Err(err) = fs::metadata(&auth) {
-            if err.kind() == io::ErrorKind::NotFound {
-                fs::write(&auth, DEFAULT_AUTH_CONFIG)?;
-            } else {
-                return Err(err);
-            }
-        }
+        fs::write_if_not_found(&auth, DEFAULT_AUTH_CONFIG)?;
 
         Ok(())
     }

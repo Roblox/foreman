@@ -1,11 +1,13 @@
-use std::{collections::HashMap, env, fmt, io};
+use std::{collections::HashMap, env, fmt};
 
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
 
-use crate::{ci_string::CiString, fs, paths::ForemanPaths, tool_provider::Provider};
+use crate::{
+    ci_string::CiString, error::ForemanError, fs, paths::ForemanPaths, tool_provider::Provider,
+};
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ToolSpec {
     Github {
@@ -83,29 +85,28 @@ impl ConfigFile {
         }
     }
 
-    pub fn aggregate(paths: &ForemanPaths) -> io::Result<ConfigFile> {
+    pub fn aggregate(paths: &ForemanPaths) -> Result<ConfigFile, ForemanError> {
         let mut config = ConfigFile::new();
 
-        let base_dir = env::current_dir()?;
+        let base_dir = env::current_dir().map_err(|err| {
+            ForemanError::io_error_with_context(
+                err,
+                "unable to obtain the current working directory",
+            )
+        })?;
         let mut current_dir = base_dir.as_path();
 
         loop {
             let config_path = current_dir.join("foreman.toml");
 
-            match fs::read(&config_path) {
-                Ok(contents) => {
-                    let config_source = toml::from_slice(&contents).unwrap();
-                    log::debug!(
-                        "aggregating content from config file at {}",
-                        config_path.display()
-                    );
-                    config.fill_from(config_source);
-                }
-                Err(err) => {
-                    if err.kind() != io::ErrorKind::NotFound {
-                        return Err(err);
-                    }
-                }
+            if let Some(contents) = fs::try_read(&config_path)? {
+                let config_source = toml::from_slice(&contents)
+                    .map_err(|err| ForemanError::config_parsing(&config_path, err.to_string()))?;
+                log::debug!(
+                    "aggregating content from config file at {}",
+                    config_path.display()
+                );
+                config.fill_from(config_source);
             }
 
             if let Some(parent) = current_dir.parent() {
@@ -116,20 +117,14 @@ impl ConfigFile {
         }
 
         let home_config_path = paths.user_config();
-        match fs::read(&home_config_path) {
-            Ok(contents) => {
-                let config_source = toml::from_slice(&contents).unwrap();
-                log::debug!(
-                    "aggregating content from config file at {}",
-                    home_config_path.display()
-                );
-                config.fill_from(config_source);
-            }
-            Err(err) => {
-                if err.kind() != io::ErrorKind::NotFound {
-                    return Err(err);
-                }
-            }
+        if let Some(contents) = fs::try_read(&home_config_path)? {
+            let config_source = toml::from_slice(&contents)
+                .map_err(|err| ForemanError::config_parsing(&home_config_path, err.to_string()))?;
+            log::debug!(
+                "aggregating content from config file at {}",
+                home_config_path.display()
+            );
+            config.fill_from(config_source);
         }
 
         Ok(config)
