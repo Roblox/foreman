@@ -6,6 +6,7 @@ use std::{
     process,
 };
 
+use command_group::CommandGroup;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use zip::ZipArchive;
@@ -36,7 +37,7 @@ impl ToolCache {
 
         let status = process::Command::new(&tool_path)
             .args(args)
-            .status()
+            .group_status()
             .map_err(|err| {
                 ForemanError::io_error_with_context(err,
                     format!(

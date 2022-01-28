@@ -2,6 +2,7 @@
 
 ## Unreleased Changes
 
+- Report correct exit code ([#41](https://github.com/Roblox/foreman/pull/41))
 - Improve error handling to reduces crashes and add more useful error messages ([#40](https://github.com/Roblox/foreman/pull/40))
 - Add environment variable to override Foreman home directory ([#39](https://github.com/Roblox/foreman/pull/39))
 - Support tools hosted on GitLab ([#31](https://github.com/Roblox/foreman/pull/31))
