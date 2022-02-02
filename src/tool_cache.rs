@@ -22,7 +22,7 @@ use crate::{
 };
 
 /// Contains the current state of all of the tools that Foreman manages.
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct ToolCache {
     pub tools: HashMap<CiString, ToolEntry>,
     #[serde(skip)]
@@ -30,6 +30,13 @@ pub struct ToolCache {
 }
 
 impl ToolCache {
+    pub fn new(paths: &ForemanPaths) -> Self {
+        Self {
+            tools: Default::default(),
+            paths: paths.clone(),
+        }
+    }
+
     pub fn run(&self, tool: &ToolSpec, version: &Version, args: Vec<String>) -> ForemanResult<i32> {
         let tool_path = self.get_tool_exe_path(tool, version);
 
@@ -173,13 +180,15 @@ impl ToolCache {
     }
 
     pub fn load(paths: &ForemanPaths) -> ForemanResult<Self> {
-        let mut tool_cache = fs::try_read(paths.index_file())?
+        let path = paths.index_file();
+        log::debug!("load tool cache from {}", path.display());
+
+        let mut tool_cache = fs::try_read(&path)?
             .map(|contents| {
-                serde_json::from_slice(&contents).map_err(|err| {
-                    ForemanError::tool_cache_parsing(paths.index_file(), err.to_string())
-                })
+                serde_json::from_slice(&contents)
+                    .map_err(|err| ForemanError::tool_cache_parsing(&path, err.to_string()))
             })
-            .unwrap_or_else(|| Ok(Self::default()))?;
+            .unwrap_or_else(|| Ok(Self::new(paths)))?;
 
         tool_cache.paths = paths.clone();
         Ok(tool_cache)
@@ -188,7 +197,7 @@ impl ToolCache {
     fn save(&self) -> ForemanResult<()> {
         let serialized =
             serde_json::to_string_pretty(self).expect("unable to serialize tool cache");
-        fs::write(self.index_file(), serialized)
+        fs::write(self.paths.index_file(), serialized)
     }
 
     fn get_tool_exe_path(&self, tool: &ToolSpec, version: &Version) -> PathBuf {
@@ -197,15 +206,9 @@ impl ToolCache {
         tool_path.push(exe_name);
         tool_path
     }
-
-    fn index_file(&self) -> PathBuf {
-        let mut path = self.paths.root_dir();
-        path.push("tool-cache.json");
-        path
-    }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ToolEntry {
     pub versions: BTreeSet<Version>,
 }
@@ -214,4 +217,88 @@ fn tool_identifier_to_exe_name(tool: &ToolSpec, version: &Version) -> String {
     let mut name = format!("{}-{}{}", tool.cache_key().0, version, EXE_SUFFIX);
     name = name.replace('/', "__");
     name.replace('\\', "__")
+}
+
+#[cfg(test)]
+mod test {
+    use tempfile::tempdir;
+
+    use super::*;
+
+    mod load {
+        use super::*;
+
+        #[test]
+        fn use_default_when_tool_cache_file_does_not_exist() {
+            let foreman_root = tempdir().expect("unable to create temporary directory");
+            let paths = ForemanPaths::new(foreman_root.into_path());
+
+            let cache = ToolCache::load(&paths).unwrap();
+
+            assert_eq!(cache, ToolCache::new(&paths));
+        }
+
+        #[test]
+        fn reads_the_content_from_the_cache_file() {
+            let foreman_root = tempdir().expect("unable to create temporary directory");
+            let paths = ForemanPaths::new(foreman_root.into_path());
+
+            fs::write(
+                paths.index_file(),
+                r#"
+            {
+                "tools": {
+                    "username/toolname": {
+                        "versions": [
+                            "0.1.0"
+                        ]
+                    }
+                }
+            }
+            "#,
+            )
+            .unwrap();
+
+            let cache = ToolCache::load(&paths).unwrap();
+
+            let mut expected_cache = ToolCache::new(&paths);
+
+            expected_cache.tools.insert(
+                "username/toolname".into(),
+                ToolEntry {
+                    versions: {
+                        let mut tree = BTreeSet::new();
+                        tree.insert(Version::parse("0.1.0").unwrap());
+                        tree
+                    },
+                },
+            );
+
+            assert_eq!(cache, expected_cache);
+        }
+    }
+
+    mod save {
+        use super::*;
+
+        #[test]
+        fn snapshot_default_tool_cache() {
+            let foreman_root = tempdir().expect("unable to create temporary directory");
+            let paths = ForemanPaths::new(foreman_root.into_path());
+
+            let cache = ToolCache::new(&paths);
+
+            cache.save().unwrap();
+
+            let content = fs::try_read_to_string(paths.index_file())
+                .unwrap()
+                .expect("unable to find tool cache file");
+
+            insta::assert_snapshot!(&content, @r###"
+            {
+              "tools": {}
+            }
+            "###);
+        }
+    }
 }
