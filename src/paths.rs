@@ -48,7 +48,7 @@ impl ForemanPaths {
         self.root_dir.clone()
     }
 
-    pub fn from_root<P: AsRef<Path>>(&self, path: P) -> PathBuf {
+    fn from_root<P: AsRef<Path>>(&self, path: P) -> PathBuf {
         let mut dir = self.root_dir();
         dir.push(path);
         dir
@@ -71,7 +71,7 @@ impl ForemanPaths {
     }
 
     pub fn index_file(&self) -> PathBuf {
-        self.from_root("tool-cache.toml")
+        self.from_root("tool-cache.json")
     }
 
     pub fn create_all(&self) -> Result<(), ForemanError> {
@@ -94,5 +94,63 @@ impl Default for ForemanPaths {
         let mut root_dir = dirs::home_dir().expect("unable to get home directory");
         root_dir.push(".foreman");
         Self::new(root_dir)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn root_dir() {
+        let root = PathBuf::from("/foreman");
+        let paths = ForemanPaths::new(root.clone());
+
+        assert_eq!(paths.root_dir(), root);
+    }
+
+    #[test]
+    fn tools_dir() {
+        let mut directory = PathBuf::from("/foreman");
+        let paths = ForemanPaths::new(directory.clone());
+        directory.push("tools");
+
+        assert_eq!(directory, paths.tools_dir());
+    }
+
+    #[test]
+    fn bin_dir() {
+        let mut directory = PathBuf::from("/foreman");
+        let paths = ForemanPaths::new(directory.clone());
+        directory.push("bin");
+
+        assert_eq!(directory, paths.bin_dir());
+    }
+
+    #[test]
+    fn auth_store() {
+        let mut directory = PathBuf::from("/foreman");
+        let paths = ForemanPaths::new(directory.clone());
+        directory.push("auth.toml");
+
+        assert_eq!(directory, paths.auth_store());
+    }
+
+    #[test]
+    fn user_config() {
+        let mut directory = PathBuf::from("/foreman");
+        let paths = ForemanPaths::new(directory.clone());
+        directory.push("foreman.toml");
+
+        assert_eq!(directory, paths.user_config());
+    }
+
+    #[test]
+    fn index_file() {
+        let mut directory = PathBuf::from("/foreman");
+        let paths = ForemanPaths::new(directory.clone());
+        directory.push("tool-cache.json");
+
+        assert_eq!(directory, paths.index_file());
     }
 }
