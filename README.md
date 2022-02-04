@@ -18,6 +18,11 @@ You can download pre-built Foreman releases for Windows, macOS, and Linux from t
 ### GitHub Actions
 You can use the official [setup-foreman](https://github.com/Roblox/setup-foreman) action to install Foreman as part of your GitHub Actions workflow.
 
+### Upgrading
+First, replace your current version of Foreman with the newest one from the [GitHub releases](https://github.com/Roblox/foreman/releases). If you don't remember where you have put the executable, running `where foreman` on Windows or `which foreman` on macOS and Linux should help you find it.
+
+The other step is to locate the `bin` directory created by foreman and delete the files there. It is as simple as opening `.foreman/bin`, which is located under the user directory (`%homepath%` on Windows or `$HOME` on macOS and Linux).
+
 ### From Source
 If you have [Rust](https://www.rust-lang.org/) 1.53.0 or newer installed, you can also compile Foreman by installing it from [crates.io](https://crates.io):
 
