@@ -30,6 +30,8 @@ If you have [Rust](https://www.rust-lang.org/) 1.53.0 or newer installed, you ca
 cargo install foreman
 ```
 
+To upgrade, re-run `cargo install foreman` and clean up the `bin` directory as described in the section just above.
+
 ## Usage
 Foreman downloads tools from GitHub or GitLab and references them by their `user/repo` name, like `Roblox/foreman`.
 
