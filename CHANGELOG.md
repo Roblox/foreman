@@ -2,7 +2,7 @@
 
 ## Unreleased Changes
 
-## 1.0.3 (2020-02-04)
+## 1.0.3 (2022-02-04)
 
 - Report correct exit code ([#41](https://github.com/Roblox/foreman/pull/41))
 - Improve error handling to reduces crashes and add more useful error messages ([#40](https://github.com/Roblox/foreman/pull/40))
