@@ -1,6 +1,7 @@
 # Foreman Changelog
 
 ## Unreleased Changes
+- Add support for Apple Silicon (arm64) binaries ([#46](https://github.com/Roblox/foreman/pull/46))
 
 ## 1.0.3 (2022-02-04)
 
