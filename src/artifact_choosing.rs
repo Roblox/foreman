@@ -1,5 +1,12 @@
-#[cfg(target_os = "windows")]
-static PLATFORM_KEYWORDS: &[&str] = &["win32", "win64", "windows"];
+#[cfg(all(target_os = "windows", target_arch = "x86"))]
+static PLATFORM_KEYWORDS: &[&str] = &["win32", "windows"];
+
+#[cfg(all(target_os = "windows", not(target_arch = "x86")))]
+static PLATFORM_KEYWORDS: &[&str] = &[
+	"win64",
+	"windows",
+	"win32",
+];
 
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 static PLATFORM_KEYWORDS: &[&str] = &["macos-x86_64", "darwin-x86_64", "macos", "darwin"];
