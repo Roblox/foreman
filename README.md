@@ -32,12 +32,23 @@ cargo install foreman
 
 To upgrade, re-run `cargo install foreman` and clean up the `bin` directory as described in the section just above.
 
-## Usage
-Foreman downloads tools from GitHub or GitLab and references them by their `user/repo` name, like `Roblox/foreman`.
+## Setup
+Most users will want to do a bit of additional setup to begin using tools via foreman.
 
+### Path Configuration
 On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
 
-It's recommended that you **add `~/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system.
+It's recommended that you **add `~/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system. If you have tools installed via other mechanisms (for example, you may have previously installed `rojo` directly via `cargo`), ensure that `~/.foreman/bin` is on your PATH _before_ any other installation directories like `.cargo/bin` in order to make sure it takes precedence.
+
+### Authentication
+To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line).
+
+Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
+
+Similarly, for projects hosted on a GitLab repository, use `foreman gitlab-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml`.
+
+## Usage
+Foreman downloads tools from GitHub or GitLab and references them by their `user/repo` name, like `Roblox/foreman`.
 
 ### Configuration File
 
@@ -80,13 +91,6 @@ remodel = { github = "rojo-rbx/remodel", version = "0.9.1" }
 Run `foreman install` to tell Foreman to install any new binaries from this config file.
 
 When inside this directory, the `remodel` command will run the latest 0.6.x release of Remodel installed on your system.
-
-### Authentication
-To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line).
-
-Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
-
-Similarly, for projects hosted on a GitLab repository, use `foreman gitlab-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml`.
 
 ## Troubleshooting
 Foreman is a work in progress tool and has some known issues. Check out [the issue tracker](https://github.com/Roblox/foreman/issues) for known bugs.
