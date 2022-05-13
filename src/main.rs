@@ -72,13 +72,17 @@ impl ToolInvocation {
 
             Ok(())
         } else {
-            eprintln!(
-                "'{}' is not a known Foreman tool, but Foreman was invoked with its name.",
-                self.name
-            );
-            eprintln!("You may not have this tool installed here, or your install may be broken.");
-
-            Ok(())
+            let current_dir = env::current_dir().map_err(|err| {
+                ForemanError::io_error_with_context(
+                    err,
+                    "unable to obtain the current working directory",
+                )
+            })?;
+            Err(ForemanError::ToolNotInstalled {
+                name: self.name,
+                current_path: current_dir,
+                config_file: config,
+            })
         }
     }
 }

@@ -131,6 +131,16 @@ impl ConfigFile {
     }
 }
 
+impl fmt::Display for ConfigFile {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Available Tools:")?;
+        for (name, spec) in self.tools.iter() {
+            writeln!(f, "\t {} => {}", name, spec)?;
+        }
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
