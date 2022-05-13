@@ -2,7 +2,7 @@ use std::{fmt, io, path::PathBuf};
 
 use semver::Version;
 
-use crate::config::ToolSpec;
+use crate::config::{ConfigFile, ToolSpec};
 
 pub type ForemanResult<T> = Result<T, ForemanError>;
 
@@ -62,6 +62,11 @@ pub enum ForemanError {
         tool: ToolSpec,
         version: Version,
         message: String,
+    },
+    ToolNotInstalled {
+        name: String,
+        current_path: PathBuf,
+        config_file: ConfigFile,
     },
 }
 
@@ -282,6 +287,20 @@ impl fmt::Display for ForemanError {
                 tool.source(),
                 version,
                 message
+            ),
+            Self::ToolNotInstalled {
+                name,
+                current_path,
+                config_file,
+            } => write!(
+                f,
+                "'{}' is not a known Foreman tool, but Foreman was invoked \
+                with its name.\n\nTo use this tool from {}, declare it in a \
+                'foreman.toml' file in the current directory or a parent \
+                directory.\n\n{}",
+                name,
+                current_path.display(),
+                config_file,
             ),
         }
     }
