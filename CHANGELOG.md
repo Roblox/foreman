@@ -1,6 +1,8 @@
 # Foreman Changelog
 
-## Unreleased Changes
+## 1.0.4 (2022-05-13)
+
+- Introduce improved error output on using uninstalled tools ([#51](https://github.com/Roblox/foreman/pull/51))
 - Add support for Apple Silicon (arm64) binaries ([#46](https://github.com/Roblox/foreman/pull/46))
 
 ## 1.0.3 (2022-02-04)
