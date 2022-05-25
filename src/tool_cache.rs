@@ -109,12 +109,14 @@ impl ToolCache {
                     Version::parse(&release.tag_name[1..]).ok()
                 })?;
 
+                log::trace!("Checking for name with compatible os/arch pair from platform-derived list: {:?}", platform_keywords());
                 let asset_index = release.assets.iter().position(|asset| {
                     platform_keywords()
                         .iter()
                         .any(|keyword| asset.name.contains(keyword))
                 })?;
 
+                log::debug!("Found matching artifact: {}", release.assets[asset_index].name);
                 Some((version, asset_index, release))
             })
             .collect();
