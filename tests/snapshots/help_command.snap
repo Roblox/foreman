@@ -2,7 +2,7 @@
 source: tests/cli.rs
 expression: content
 ---
-foreman 1.0.4
+foreman 1.0.5
 
 USAGE:
     foreman [FLAGS] <SUBCOMMAND>
