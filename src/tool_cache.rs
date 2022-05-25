@@ -26,10 +26,8 @@ fn choose_asset(release: &Release, platform_keywords: &[&str]) -> Option<usize> 
         "Checking for name with compatible os/arch pair from platform-derived list: {:?}",
         platform_keywords
     );
-    let asset_index = release.assets.iter().position(|asset| {
-        platform_keywords
-            .iter()
-            .any(|keyword| asset.name.contains(keyword))
+    let asset_index = platform_keywords.iter().find_map(|keyword| {
+        release.assets.iter().position(|asset| asset.name.contains(keyword))
     })?;
 
     log::debug!("Found matching artifact: {}", release.assets[asset_index].name);
@@ -238,7 +236,7 @@ mod test {
 
     use super::*;
 
-    // Regression test for LUAFDN-1041
+    // Regression test for LUAFDN-1041, based on the release that surfaced it
     #[test]
     fn select_correct_asset() {
         let platform_keywords = &["macos-x86_64", "darwin-x86_64", "macos", "darwin"];
