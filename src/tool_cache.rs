@@ -18,8 +18,23 @@ use crate::{
     error::{ForemanError, ForemanResult},
     fs,
     paths::ForemanPaths,
-    tool_provider::ToolProvider,
+    tool_provider::{ToolProvider, Release},
 };
+
+fn choose_asset(release: &Release, platform_keywords: &[&str]) -> Option<usize> {
+    log::trace!(
+        "Checking for name with compatible os/arch pair from platform-derived list: {:?}",
+        platform_keywords
+    );
+    let asset_index = release.assets.iter().position(|asset| {
+        platform_keywords
+            .iter()
+            .any(|keyword| asset.name.contains(keyword))
+    })?;
+
+    log::debug!("Found matching artifact: {}", release.assets[asset_index].name);
+    Some(asset_index)
+}
 
 /// Contains the current state of all of the tools that Foreman manages.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -109,14 +124,8 @@ impl ToolCache {
                     Version::parse(&release.tag_name[1..]).ok()
                 })?;
 
-                log::trace!("Checking for name with compatible os/arch pair from platform-derived list: {:?}", platform_keywords());
-                let asset_index = release.assets.iter().position(|asset| {
-                    platform_keywords()
-                        .iter()
-                        .any(|keyword| asset.name.contains(keyword))
-                })?;
+                let asset_index = choose_asset(&release, platform_keywords())?;
 
-                log::debug!("Found matching artifact: {}", release.assets[asset_index].name);
                 Some((version, asset_index, release))
             })
             .collect();
@@ -225,7 +234,38 @@ fn tool_identifier_to_exe_name(tool: &ToolSpec, version: &Version) -> String {
 mod test {
     use tempfile::tempdir;
 
+    use crate::tool_provider::ReleaseAsset;
+
     use super::*;
+
+    // Regression test for LUAFDN-1041
+    #[test]
+    fn select_correct_asset() {
+        let platform_keywords = &["macos-x86_64", "darwin-x86_64", "macos", "darwin"];
+        let release = Release {
+            prerelease: false,
+            tag_name: "v0.5.2".to_string(),
+            assets: vec![
+                ReleaseAsset {
+                    name: "tool-linux.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/1".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-macos-arm64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/2".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-macos-x86_64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/3".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-win64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/4".to_string(),
+                },
+            ],
+        };
+        assert_eq!(choose_asset(&release, platform_keywords), Some(2));
+    }
 
     mod load {
         use super::*;
