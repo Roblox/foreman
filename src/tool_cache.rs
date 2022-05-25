@@ -239,7 +239,6 @@ mod test {
     // Regression test for LUAFDN-1041, based on the release that surfaced it
     #[test]
     fn select_correct_asset() {
-        let platform_keywords = &["macos-x86_64", "darwin-x86_64", "macos", "darwin"];
         let release = Release {
             prerelease: false,
             tag_name: "v0.5.2".to_string(),
@@ -262,7 +261,17 @@ mod test {
                 },
             ],
         };
-        assert_eq!(choose_asset(&release, platform_keywords), Some(2));
+        assert_eq!(choose_asset(&release, &["win32", "win64", "windows"]), Some(3));
+        assert_eq!(choose_asset(&release, &["macos-x86_64", "darwin-x86_64", "macos", "darwin"]), Some(2));
+        assert_eq!(choose_asset(&release, &[
+            "macos-arm64",
+            "darwin-arm64",
+            "macos-x86_64",
+            "darwin-x86_64",
+            "macos",
+            "darwin",
+        ]), Some(1));
+        assert_eq!(choose_asset(&release, &["linux"]), Some(0));
     }
 
     mod load {
