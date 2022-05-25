@@ -18,7 +18,7 @@ use crate::{
     error::{ForemanError, ForemanResult},
     fs,
     paths::ForemanPaths,
-    tool_provider::{ToolProvider, Release},
+    tool_provider::{Release, ToolProvider},
 };
 
 fn choose_asset(release: &Release, platform_keywords: &[&str]) -> Option<usize> {
@@ -27,10 +27,16 @@ fn choose_asset(release: &Release, platform_keywords: &[&str]) -> Option<usize> 
         platform_keywords
     );
     let asset_index = platform_keywords.iter().find_map(|keyword| {
-        release.assets.iter().position(|asset| asset.name.contains(keyword))
+        release
+            .assets
+            .iter()
+            .position(|asset| asset.name.contains(keyword))
     })?;
 
-    log::debug!("Found matching artifact: {}", release.assets[asset_index].name);
+    log::debug!(
+        "Found matching artifact: {}",
+        release.assets[asset_index].name
+    );
     Some(asset_index)
 }
 
@@ -261,16 +267,31 @@ mod test {
                 },
             ],
         };
-        assert_eq!(choose_asset(&release, &["win32", "win64", "windows"]), Some(3));
-        assert_eq!(choose_asset(&release, &["macos-x86_64", "darwin-x86_64", "macos", "darwin"]), Some(2));
-        assert_eq!(choose_asset(&release, &[
-            "macos-arm64",
-            "darwin-arm64",
-            "macos-x86_64",
-            "darwin-x86_64",
-            "macos",
-            "darwin",
-        ]), Some(1));
+        assert_eq!(
+            choose_asset(&release, &["win32", "win64", "windows"]),
+            Some(3)
+        );
+        assert_eq!(
+            choose_asset(
+                &release,
+                &["macos-x86_64", "darwin-x86_64", "macos", "darwin"]
+            ),
+            Some(2)
+        );
+        assert_eq!(
+            choose_asset(
+                &release,
+                &[
+                    "macos-arm64",
+                    "darwin-arm64",
+                    "macos-x86_64",
+                    "darwin-x86_64",
+                    "macos",
+                    "darwin",
+                ]
+            ),
+            Some(1)
+        );
         assert_eq!(choose_asset(&release, &["linux"]), Some(0));
     }
 
