@@ -45,16 +45,16 @@ jobs:
         name: foreman-macos-x86_64
         path: target/x86_64-apple-darwin/release/foreman
 
-    - name: Build aarch64 release binary
-      run: |
-        source $HOME/.cargo/env
-        cargo build --verbose --locked --release --target aarch64-apple-darwin
+    # - name: Build aarch64 release binary
+    #   run: |
+    #     source $HOME/.cargo/env
+    #     cargo build --verbose --locked --release --target aarch64-apple-darwin
 
-    - name: Upload arm64 artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: foreman-macos-arm64
-        path: target/arm64-apple-darwin/release/foreman
+    # - name: Upload arm64 artifacts
+    #   uses: actions/upload-artifact@v1
+    #   with:
+    #     name: foreman-macos-arm64
+    #     path: target/arm64-apple-darwin/release/foreman
 
   linux:
     runs-on: ubuntu-latest
@@ -85,7 +85,6 @@ jobs:
     - run: |
         zip -rj foreman-win64.zip ./artifacts/foreman-win64/*
         zip -rj foreman-macos-x86_64.zip ./artifacts/foreman-macos-x86_64/*
-        zip -rj foreman-macos-arm64.zip ./artifacts/foreman-macos-arm64/*
         zip -rj foreman-linux.zip ./artifacts/foreman-linux/*
     - name: Create release
       id: create_release
@@ -117,15 +116,15 @@ jobs:
         asset_name: foreman-macos-x86_64.zip
         asset_content_type: application/zip
 
-    - name: Upload macos build (arm64)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./foreman-macos-arm64.zip
-        asset_name: foreman-macos-arm64.zip
-        asset_content_type: application/zip
+    # - name: Upload macos build (arm64)
+    #   uses: actions/upload-release-asset@v1
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   with:
+    #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+    #     asset_path: ./foreman-macos-arm64.zip
+    #     asset_name: foreman-macos-arm64.zip
+    #     asset_content_type: application/zip
 
     - name: Upload linux build
       uses: actions/upload-release-asset@v1
