@@ -272,13 +272,12 @@ fn prompt_auth_token(
 
             loop {
                 let token =
-                    rpassword::prompt_password(format!("{} Token: ", provider))
-                        .map_err(|err| {
-                            ForemanError::io_error_with_context(
-                                err,
-                                "an error happened trying to read password",
-                            )
-                        })?;
+                    rpassword::prompt_password(format!("{} Token: ", provider)).map_err(|err| {
+                        ForemanError::io_error_with_context(
+                            err,
+                            "an error happened trying to read password",
+                        )
+                    })?;
 
                 if token.is_empty() {
                     println!("Token must be non-empty.");
