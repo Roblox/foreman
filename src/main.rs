@@ -272,7 +272,7 @@ fn prompt_auth_token(
 
             loop {
                 let token =
-                    rpassword::read_password_from_tty(Some(&format!("{} Token: ", provider)))
+                    rpassword::prompt_password(format!("{} Token: ", provider))
                         .map_err(|err| {
                             ForemanError::io_error_with_context(
                                 err,
