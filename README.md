@@ -97,5 +97,20 @@ Foreman is a work in progress tool and has some known issues. Check out [the iss
 
 If you have issues with configuration, you can delete `~/.foreman` to delete all cached data and start from scratch. This directory contains all of Foreman's installed tools and configuration.
 
+### `Bad CPU type` Error
+If you're using foreman version 1.0.4 or older on a non-M1 Mac, you may have encounter an error that looks like this:
+```
+an error happened trying to run `github.com/some-org/some-tool@^1.2.3` at `/Users/some-user/.foreman/tools/some-org__some-tool-1.2.3` (this is an error in Foreman): Bad CPU type in executable (os error 86)
+```
+
+In this case, your foreman installation has mistakenly downloaded an incompatible version of the tool binary due to [an error in the binary file selection logic](https://github.com/Roblox/foreman/pull/53).
+
+To fix this error, take the following steps:
+1. Upgrade your version of `foreman` per [the instructions above](#upgrading).
+2. Delete the `~/.foreman/tool-cache.json` file and the `~/.foreman/tools/` folder (and its contents). This should remove any invalid binaries that foreman has cached.
+3. Run `foreman install` to redownload all relevant tools.
+
+Your downloaded tools should now work correctly.
+
 ## License
 Foreman is available under the MIT license. See [LICENSE.txt](LICENSE.txt) or <https://opensource.org/licenses/MIT> for details.
