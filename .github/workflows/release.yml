@@ -45,6 +45,9 @@ jobs:
         name: foreman-macos-x86_64
         path: target/x86_64-apple-darwin/release/foreman
 
+    - name: Cleanup finished x86_64 build
+      run: rm -rf ./target
+
     - name: Build aarch64 release binary
       run: |
         source $HOME/.cargo/env
