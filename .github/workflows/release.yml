@@ -4,9 +4,6 @@ on:
   push:
     tags: ["*"]
 
-  pull_request:
-    branches:
-    - master
 jobs:
   windows:
     runs-on: windows-latest
@@ -79,7 +76,6 @@ jobs:
         path: target/release/foreman
 
   release:
-    if: ${{ false }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: ['windows', 'macos', 'linux']
