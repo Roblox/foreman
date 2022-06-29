@@ -51,7 +51,7 @@ jobs:
     - name: Cleanup finished x86_64 build
       run: rm -rf ./target
 
-    - name: Build aarch64 release binary
+    - name: Build arm64 release binary
       run: |
         source $HOME/.cargo/env
         cargo build --verbose --locked --release --target aarch64-apple-darwin
@@ -60,7 +60,7 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: foreman-macos-arm64
-        path: target/arm64-apple-darwin/release/foreman
+        path: target/aarch64-apple-darwin/release/foreman
 
   linux:
     runs-on: ubuntu-latest
