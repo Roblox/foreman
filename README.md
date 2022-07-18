@@ -107,7 +107,7 @@ In this case, your foreman installation has mistakenly downloaded an incompatibl
 
 To fix this error, take the following steps:
 1. Upgrade your version of `foreman` per [the instructions above](#upgrading).
-2. Delete the `~/.foreman/tool-cache.json` file and the `~/.foreman/tools/` folder (and its contents). This should remove any invalid binaries that foreman has cached.
+2. Delete the `~/.foreman/tool-cache.json` file and the `~/.foreman/tools/` folder (and its contents), as well as the `~/.foreman/bin` folder (as described in the [Upgrading](#upgrading) section above). This should remove any invalid binaries that foreman has cached.
 3. Run `foreman install` to redownload all relevant tools.
 
 Your downloaded tools should now work correctly.
