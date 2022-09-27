@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Support `macos-aarch64` as an artifact name for Apple Silicon (arm64) binaries ([#60](https://github.com/Roblox/foreman/pull/60))
+- Take into account architecture when downloading binaries for linux ([#59](https://github.com/Roblox/foreman/pull/59))
 
 ## 1.0.4 (2022-05-13)
 
