@@ -296,6 +296,42 @@ mod test {
     }
 
     #[test]
+    fn select_correct_asset_macos() {
+        let release = Release {
+            prerelease: false,
+            tag_name: "v0.5.2".to_string(),
+            assets: vec![
+                ReleaseAsset {
+                    name: "tool-linux.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/1".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-macos-x86_64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/2".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-macos-aarch64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/3".to_string(),
+                },
+            ],
+        };
+        assert_eq!(
+            choose_asset(
+                &release,
+                &[
+                    "macos-arm64",
+                    "darwin-arm64",
+                    "macos-aarch64",
+                    "darwin-aarch64",
+                    "macos",
+                    "darwin",
+                ]
+            ),
+            Some(2)
+        );
+    }
+
+    #[test]
     fn select_correct_asset_linux() {
         let release = Release {
             prerelease: false,
