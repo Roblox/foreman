@@ -295,6 +295,38 @@ mod test {
         assert_eq!(choose_asset(&release, &["linux"]), Some(0));
     }
 
+    #[test]
+    fn select_correct_asset_linux() {
+        let release = Release {
+            prerelease: false,
+            tag_name: "v0.5.2".to_string(),
+            assets: vec![
+                ReleaseAsset {
+                    name: "tool-linux-aarch64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/1".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-linux-x86_64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/2".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-macos-x86_64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/3".to_string(),
+                },
+                ReleaseAsset {
+                    name: "tool-win64.zip".to_string(),
+                    url: "https://example.com/some/repo/releases/assets/4".to_string(),
+                },
+            ],
+        };
+        assert_eq!(choose_asset(&release, &["linux"]), Some(0));
+        assert_eq!(choose_asset(&release, &["linux-x86_64", "linux"]), Some(1));
+        assert_eq!(
+            choose_asset(&release, &["linux-arm64", "linux-aarch64", "linux"]),
+            Some(0)
+        );
+    }
+
     mod load {
         use super::*;
 
