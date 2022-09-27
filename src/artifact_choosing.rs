@@ -10,8 +10,6 @@ static PLATFORM_KEYWORDS: &[&str] = &[
     "darwin-arm64",
     "macos-aarch64",
     "darwin-aarch64",
-    "macos-x86_64",
-    "darwin-x86_64",
     "macos",
     "darwin",
 ];
