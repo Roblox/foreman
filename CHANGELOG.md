@@ -1,5 +1,9 @@
 # Foreman Changelog
 
+## Unreleased
+
+- Support `macos-aarch64` as an artifact name for Apple Silicon (arm64) binaries ([#60](https://github.com/Roblox/foreman/pull/60))
+
 ## 1.0.4 (2022-05-13)
 
 - Introduce improved error output on using uninstalled tools ([#51](https://github.com/Roblox/foreman/pull/51))
