@@ -14,8 +14,11 @@ static PLATFORM_KEYWORDS: &[&str] = &[
     "darwin",
 ];
 
-#[cfg(target_os = "linux")]
-static PLATFORM_KEYWORDS: &[&str] = &["linux"];
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+static PLATFORM_KEYWORDS: &[&str] = &["linux-x86_64", "linux"];
+
+#[cfg(all(target_os = "linux", target_arch = "aarch64"))]
+static PLATFORM_KEYWORDS: &[&str] = &["linux-arm64", "linux-aarch64", "linux"];
 
 pub fn platform_keywords() -> &'static [&'static str] {
     PLATFORM_KEYWORDS
