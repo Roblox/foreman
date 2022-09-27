@@ -1,5 +1,9 @@
 # Foreman Changelog
 
+## Unreleased
+
+- Take into account architecture when downloading binaries for linux ([#59](https://github.com/Roblox/foreman/pull/59))
+
 ## 1.0.4 (2022-05-13)
 
 - Introduce improved error output on using uninstalled tools ([#51](https://github.com/Roblox/foreman/pull/51))
