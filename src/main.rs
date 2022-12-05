@@ -212,7 +212,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             if !accumulated_errors.is_empty() {
                 for (tool, err) in accumulated_errors {
-                    log::info!("Failed to download tool \"{}\". Got error: {}", *tool, err);
+                    log::error!("Failed to download tool \"{}\". Got error: \n{}", *tool, err);
                 }
             }
 
