@@ -181,3 +181,20 @@ stylua = { github = "JohnnyMorganz/StyLua", version = "0.11.3" }
     );
     context.snapshot_command("install_invalid_auth_configuration");
 }
+
+#[test]
+fn snapshot_install_all_tools_before_failing() {
+    let mut context = TestContext::foreman().arg("install");
+    let config_path = context.path_from_working_directory("foreman.toml");
+    write_file(
+        &config_path,
+        r#"
+[tools]
+stylua = { github = "JohnnyMorganz/StyLua", version = "0.11.3" }
+not-a-real-tool = { github = "Roblox/VeryFakeRepository", version = "0.1.0" }
+badly-formatted-tool = { github = "Roblox/", version = "0.2.0" }
+selene = { source = "Kampfkarren/selene", version = "=0.22.0" }
+    "#,
+    );
+    context.snapshot_command("install_all_tools_before_failing");
+}
