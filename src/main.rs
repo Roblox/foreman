@@ -9,7 +9,7 @@ mod paths;
 mod tool_cache;
 mod tool_provider;
 
-use std::{env, ffi::OsStr, process};
+use std::{env, ffi::OsStr, process, collections::HashMap};
 
 use paths::ForemanPaths;
 use structopt::StructOpt;
@@ -197,10 +197,23 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let mut cache = ToolCache::load(&paths)?;
 
+            let mut accumulated_errors: HashMap<&String, ForemanError> = HashMap::new();
             for (tool_alias, tool_spec) in &config.tools {
                 let providers = ToolProvider::new(&paths);
-                cache.download_if_necessary(tool_spec, &providers)?;
+
+                match cache.download_if_necessary(tool_spec, &providers) {
+                    Ok(_) => {}
+                    Err(err) => {
+                        accumulated_errors.insert(tool_alias, err);
+                    }
+                }
                 add_self_alias(tool_alias, &paths.bin_dir())?;
+            }
+
+            if !accumulated_errors.is_empty() {
+                for (tool, err) in accumulated_errors {
+                    log::info!("Failed to download tool \"{}\". Got error: {}", *tool, err);
+                }
             }
 
             if config.tools.is_empty() {
