@@ -4,7 +4,7 @@ assertion_line: 101
 expression: content
 ---
 [INFO ] Downloading github.com/JohnnyMorganz/StyLua@^0.11.3
-[ERROR] Failed to download tool "stylua". Got error: 
+[ERROR] The following error occurred while trying to download tool "stylua": 
         unable to parse Foreman authentication file (at {{FOREMAN_HOME}}auth.toml): expected an equals, found eof at line 1 column 8
         
         A Foreman authentication file looks like this:
