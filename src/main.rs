@@ -9,7 +9,7 @@ mod paths;
 mod tool_cache;
 mod tool_provider;
 
-use std::{env, ffi::OsStr, process, collections::HashMap};
+use std::{collections::HashMap, env, ffi::OsStr, process};
 
 use paths::ForemanPaths;
 use structopt::StructOpt;
@@ -212,7 +212,11 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             if !accumulated_errors.is_empty() {
                 for (tool, err) in accumulated_errors {
-                    log::error!("The following error occurred while trying to download tool \"{}\": \n{}", *tool, err);
+                    log::error!(
+                        "The following error occurred while trying to download tool \"{}\": \n{}",
+                        *tool,
+                        err
+                    );
                 }
             }
 
