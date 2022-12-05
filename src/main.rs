@@ -213,7 +213,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             if !accumulated_errors.is_empty() {
                 for (tool, err) in accumulated_errors {
                     log::error!(
-                        "The following error occurred while trying to download tool \"{}\": \n{}",
+                        "The following error occurred while trying to download tool \"{}\":\n{}",
                         *tool,
                         err
                     );
