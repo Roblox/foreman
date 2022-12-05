@@ -202,12 +202,13 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                 let providers = ToolProvider::new(&paths);
 
                 match cache.download_if_necessary(tool_spec, &providers) {
-                    Ok(_) => {}
+                    Ok(_) => {
+                        add_self_alias(tool_alias, &paths.bin_dir())?;
+                    }
                     Err(err) => {
                         accumulated_errors.insert(tool_alias, err);
                     }
                 }
-                add_self_alias(tool_alias, &paths.bin_dir())?;
             }
 
             if !accumulated_errors.is_empty() {
