@@ -9,7 +9,7 @@ mod paths;
 mod tool_cache;
 mod tool_provider;
 
-use std::{collections::HashMap, env, ffi::OsStr, process};
+use std::{env, ffi::OsStr, process};
 
 use paths::ForemanPaths;
 use structopt::StructOpt;
@@ -197,7 +197,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let mut cache = ToolCache::load(&paths)?;
 
-            let mut accumulated_errors: HashMap<&String, ForemanError> = HashMap::new();
+            let mut accumulated_errors: Vec<(&String, ForemanError)> = Vec::new();
             for (tool_alias, tool_spec) in &config.tools {
                 let providers = ToolProvider::new(&paths);
 
@@ -206,7 +206,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                         add_self_alias(tool_alias, &paths.bin_dir())?;
                     }
                     Err(err) => {
-                        accumulated_errors.insert(tool_alias, err);
+                        accumulated_errors.push((tool_alias, err));
                     }
                 }
             }
