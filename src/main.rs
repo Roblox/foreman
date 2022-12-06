@@ -189,7 +189,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             .init();
     }
 
-    match options.subcommand {
+    let subcommand_result: ForemanResult<()> = match options.subcommand {
         Subcommand::Install => {
             let config = ConfigFile::aggregate(&paths)?;
 
@@ -197,7 +197,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let mut cache = ToolCache::load(&paths)?;
 
-            let mut accumulated_errors: Vec<(&String, ForemanError)> = Vec::new();
+            let mut accumulated_errors: Vec<(String, ForemanError)> = Vec::new();
             for (tool_alias, tool_spec) in &config.tools {
                 let providers = ToolProvider::new(&paths);
 
@@ -206,19 +206,25 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                         add_self_alias(tool_alias, &paths.bin_dir())?;
                     }
                     Err(err) => {
-                        accumulated_errors.push((tool_alias, err));
+                        accumulated_errors.push((tool_alias.to_string(), err));
                     }
                 }
             }
 
             if !accumulated_errors.is_empty() {
-                for (tool, err) in accumulated_errors {
+                for (tool, err) in &accumulated_errors {
                     log::error!(
                         "The following error occurred while trying to download tool \"{}\":\n{}",
-                        *tool,
+                        tool,
                         err
                     );
                 }
+                return Err(ForemanError::ToolsNotDownloaded {
+                    tools: accumulated_errors
+                        .into_iter()
+                        .map(|(tool, _)| tool)
+                        .collect()
+                })
             }
 
             if config.tools.is_empty() {
@@ -231,6 +237,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                     paths.user_config().display()
                 );
             }
+            Ok(())
         }
         Subcommand::List => {
             println!("Installed tools:");
@@ -244,6 +251,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                     println!("    - {}", version);
                 }
             }
+            Ok(())
         }
         Subcommand::GitHubAuth(subcommand) => {
             let token = prompt_auth_token(
@@ -255,6 +263,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             AuthStore::set_github_token(&paths.auth_store(), &token)?;
 
             println!("GitHub auth saved successfully.");
+            Ok(())
         }
         Subcommand::GitLabAuth(subcommand) => {
             let token = prompt_auth_token(
@@ -266,10 +275,11 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             AuthStore::set_gitlab_token(&paths.auth_store(), &token)?;
 
             println!("GitLab auth saved successfully.");
+            Ok(())
         }
-    }
+    };
 
-    Ok(())
+    subcommand_result
 }
 
 fn prompt_auth_token(

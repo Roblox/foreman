@@ -68,6 +68,9 @@ pub enum ForemanError {
         current_path: PathBuf,
         config_file: ConfigFile,
     },
+    ToolsNotDownloaded {
+        tools: Vec<String>
+    }
 }
 
 impl ForemanError {
@@ -302,6 +305,7 @@ impl fmt::Display for ForemanError {
                 current_path.display(),
                 config_file,
             ),
+            Self::ToolsNotDownloaded { tools } => write!(f, "The following tools were not installed:\n{:#?}", tools),
         }
     }
 }

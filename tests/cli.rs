@@ -197,7 +197,7 @@ selene = { source = "Kampfkarren/selene", version = "=0.22.0" }
     "#,
     );
 
-    // Hash map iteration isn't ordered, so snapshots will be flaky.
+    // Hash map iteration isn't ordered, so download order will be flaky.
     let output_string = context.output();
     assert!(output_string.contains("[INFO ] Downloading github.com/Roblox/@^0.2.0"));
     assert!(output_string.contains("[INFO ] Downloading github.com/Kampfkarren/selene@=0.22.0"));
