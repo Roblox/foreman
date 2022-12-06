@@ -197,5 +197,5 @@ selene = { source = "Kampfkarren/selene", version = "=0.22.0" }
     "#,
     );
 
-   context.snapshot_command("install_all_tools_before_failing");
+    context.snapshot_command("install_all_tools_before_failing");
 }

@@ -223,8 +223,8 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                     tools: accumulated_errors
                         .into_iter()
                         .map(|(tool, _)| tool)
-                        .collect()
-                })
+                        .collect(),
+                });
             }
 
             if config.tools.is_empty() {
