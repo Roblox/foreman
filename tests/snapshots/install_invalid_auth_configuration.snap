@@ -20,4 +20,8 @@ expression: content
         # to access private tools.
         
         gitlab = "YOUR_TOKEN_HERE"
+The following tools were not installed:
+[
+    "stylua",
+]
 
