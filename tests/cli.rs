@@ -197,16 +197,5 @@ selene = { source = "Kampfkarren/selene", version = "=0.22.0" }
     "#,
     );
 
-    // Hash map iteration isn't ordered, so download order will be flaky.
-    let output_string = context.output();
-    assert!(output_string.contains("[INFO ] Downloading github.com/Roblox/@^0.2.0"));
-    assert!(output_string.contains("[INFO ] Downloading github.com/Kampfkarren/selene@=0.22.0"));
-    assert!(
-        output_string.contains("[INFO ] Downloading github.com/Roblox/VeryFakeRepository@^0.1.0")
-    );
-    assert!(output_string.contains("[INFO ] Downloading github.com/JohnnyMorganz/StyLua@^0.11.3"));
-    assert!(output_string.contains("[ERROR] The following error occurred while trying to download tool \"badly-formatted-tool\":\n"));
-    assert!(output_string.contains(
-        "[ERROR] The following error occurred while trying to download tool \"not-a-real-tool\":\n"
-    ));
+   context.snapshot_command("install_all_tools_before_failing");
 }
