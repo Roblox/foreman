@@ -197,33 +197,30 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let mut cache = ToolCache::load(&paths)?;
 
-            let mut accumulated_errors: Vec<(String, ForemanError)> = Vec::new();
-            for (tool_alias, tool_spec) in &config.tools {
-                let providers = ToolProvider::new(&paths);
+            let providers = ToolProvider::new(&paths);
 
-                match cache.download_if_necessary(tool_spec, &providers) {
-                    Ok(_) => {
-                        add_self_alias(tool_alias, &paths.bin_dir())?;
-                    }
-                    Err(err) => {
-                        accumulated_errors.push((tool_alias.to_string(), err));
-                    }
-                }
-            }
+            let tools_not_downloaded: Vec<String> = config
+                .tools
+                .iter()
+                .filter_map(|(tool_alias, tool_spec)| {
+                    cache
+                        .download_if_necessary(tool_spec, &providers)
+                        .and_then(|_| add_self_alias(tool_alias, &paths.bin_dir()))
+                        .err()
+                        .map(|err| {
+                            log::error!(
+                                "The following error occurred while trying to download tool \"{}\":\n{}",
+                                tool_alias,
+                                err
+                            );
+                            tool_alias.to_string()
+                        })
+                })
+                .collect();
 
-            if !accumulated_errors.is_empty() {
-                for (tool, err) in &accumulated_errors {
-                    log::error!(
-                        "The following error occurred while trying to download tool \"{}\":\n{}",
-                        tool,
-                        err
-                    );
-                }
+            if !tools_not_downloaded.is_empty() {
                 return Err(ForemanError::ToolsNotDownloaded {
-                    tools: accumulated_errors
-                        .into_iter()
-                        .map(|(tool, _)| tool)
-                        .collect(),
+                    tools: tools_not_downloaded,
                 });
             }
 
