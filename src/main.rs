@@ -270,7 +270,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             println!("GitLab auth saved successfully.");
         }
-    };
+    }
 
     Ok(())
 }
