@@ -189,7 +189,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             .init();
     }
 
-    let subcommand_result: ForemanResult<()> = match options.subcommand {
+    match options.subcommand {
         Subcommand::Install => {
             let config = ConfigFile::aggregate(&paths)?;
 
@@ -234,7 +234,6 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                     paths.user_config().display()
                 );
             }
-            Ok(())
         }
         Subcommand::List => {
             println!("Installed tools:");
@@ -248,7 +247,6 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                     println!("    - {}", version);
                 }
             }
-            Ok(())
         }
         Subcommand::GitHubAuth(subcommand) => {
             let token = prompt_auth_token(
@@ -260,7 +258,6 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             AuthStore::set_github_token(&paths.auth_store(), &token)?;
 
             println!("GitHub auth saved successfully.");
-            Ok(())
         }
         Subcommand::GitLabAuth(subcommand) => {
             let token = prompt_auth_token(
@@ -272,11 +269,10 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             AuthStore::set_gitlab_token(&paths.auth_store(), &token)?;
 
             println!("GitLab auth saved successfully.");
-            Ok(())
         }
     };
 
-    subcommand_result
+    Ok(())
 }
 
 fn prompt_auth_token(
