@@ -190,7 +190,9 @@ impl<'de> Visitor<'de> for ConfigFileVisitor {
             if tools.contains_key(&key) {
                 // item already existed inside the config
                 // throw an error as this is unlikely to be the users intention
-                return Err(de::Error::custom(format!("duplicate tool name `{key}` found")));
+                return Err(de::Error::custom(format!(
+                    "duplicate tool name `{key}` found"
+                )));
             }
 
             tools.insert(key, value);
@@ -268,7 +270,34 @@ mod test {
             )
             .unwrap_err();
 
-            assert_eq!(err.to_string(), "duplicate tool `tool` at line 1 column 1");
+            assert_eq!(
+                err.to_string(),
+                "duplicate tool name `tool` found at line 1 column 1"
+            );
+
+            let err = toml::from_str::<ConfigFileTools>(
+                r#"tool_a = { github = "user/a", version = "0.1.0" }
+			tool_b = { github = "user/b", version = "0.2.0" }
+			tool_a = { gitlab = "user/c", version = "0.3.0" }"#,
+            )
+            .unwrap_err();
+
+            assert_eq!(
+                err.to_string(),
+                "duplicate tool name `tool_a` found at line 1 column 1"
+            );
+
+            let err = toml::from_str::<ConfigFileTools>(
+                r#"tool_b = { github = "user/b", version = "0.1.0" }
+			tool_a = { github = "user/a", version = "0.2.0" }
+			tool_a = { gitlab = "user/c", version = "0.3.0" }"#,
+            )
+            .unwrap_err();
+
+            assert_eq!(
+                err.to_string(),
+                "duplicate tool name `tool_a` found at line 1 column 1"
+            );
         }
     }
 
