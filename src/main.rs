@@ -197,7 +197,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let mut cache = ToolCache::load(&paths)?;
 
-            for (tool_alias, tool_spec) in &config.tools {
+            for (tool_alias, tool_spec) in config.tools.iter() {
                 let providers = ToolProvider::new(&paths);
                 cache.download_if_necessary(tool_spec, &providers)?;
                 add_self_alias(tool_alias, &paths.bin_dir())?;

@@ -1,7 +1,14 @@
-use std::{collections::HashMap, env, fmt};
+use std::{
+    collections::HashMap,
+    env, fmt,
+    ops::{Deref, DerefMut},
+};
 
 use semver::VersionReq;
-use serde::{Deserialize, Serialize};
+use serde::{
+    de::{self, MapAccess, Visitor},
+    Deserialize, Serialize,
+};
 
 use crate::{
     ci_string::CiString, error::ForemanError, fs, paths::ForemanPaths, tool_provider::Provider,
@@ -67,20 +74,43 @@ impl fmt::Display for ToolSpec {
     }
 }
 
+#[derive(Debug, Serialize)]
+pub struct ConfigFileTools(HashMap<String, ToolSpec>);
+
+impl ConfigFileTools {
+    pub fn new() -> ConfigFileTools {
+        Self(HashMap::new())
+    }
+}
+
+impl Deref for ConfigFileTools {
+    type Target = HashMap<String, ToolSpec>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for ConfigFileTools {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigFile {
-    pub tools: HashMap<String, ToolSpec>,
+    pub tools: ConfigFileTools,
 }
 
 impl ConfigFile {
     pub fn new() -> Self {
         Self {
-            tools: HashMap::new(),
+            tools: ConfigFileTools::new(),
         }
     }
 
     fn fill_from(&mut self, other: ConfigFile) {
-        for (tool_name, tool_source) in other.tools {
+        for (tool_name, tool_source) in other.tools.0 {
             self.tools.entry(tool_name).or_insert(tool_source);
         }
     }
@@ -141,6 +171,46 @@ impl fmt::Display for ConfigFile {
     }
 }
 
+struct ConfigFileVisitor;
+
+impl<'de> Visitor<'de> for ConfigFileVisitor {
+    type Value = ConfigFileTools;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a map with non-duplicate keys")
+    }
+
+    fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+    where
+        A: MapAccess<'de>,
+    {
+        let mut tools = HashMap::new();
+
+        while let Some((key, value)) = map.next_entry()? {
+            if tools.contains_key(&key) {
+                // item already existed inside the config
+                // throw an error as this is unlikely to be the users intention
+                return Err(de::Error::custom(format!("duplicate tool `{key}`")));
+            }
+
+            tools.insert(key, value);
+        }
+
+        Ok(ConfigFileTools(tools))
+    }
+}
+
+impl<'de> Deserialize<'de> for ConfigFileTools {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let tools = deserializer.deserialize_map(ConfigFileVisitor)?;
+
+        Ok(tools)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -188,6 +258,17 @@ mod test {
                 toml::from_str(&[r#"gitlab = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
             assert_eq!(gitlab, new_gitlab("user/repo", version("0.1.0")));
+        }
+
+        #[test]
+        fn duplicate_tools() {
+            let err = toml::from_str::<ConfigFileTools>(
+                r#"tool = { github = "user/repo", version = "0.1.0" }
+			tool = { github = "user2/repo2", version = "0.2.0" }"#,
+            )
+            .unwrap_err();
+
+            assert_eq!(err.to_string(), "duplicate tool `tool` at line 1 column 1");
         }
     }
 
