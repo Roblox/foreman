@@ -190,7 +190,7 @@ impl<'de> Visitor<'de> for ConfigFileVisitor {
             if tools.contains_key(&key) {
                 // item already existed inside the config
                 // throw an error as this is unlikely to be the users intention
-                return Err(de::Error::custom(format!("duplicate tool `{key}`")));
+                return Err(de::Error::custom(format!("duplicate tool name `{key}` found")));
             }
 
             tools.insert(key, value);
