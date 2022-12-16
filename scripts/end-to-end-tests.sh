@@ -58,4 +58,4 @@ verify_github_tool stylua "JohnnyMorganz/stylua" "0.11.3"
 
 verify_gitlab_tool darklua "seaofvoices/darklua" "0.7.0"
 
-verify_install_all_before_fail Selene "Kampfkarren/selene" "0.22.0"
+verify_install_all_before_fail selene "Kampfkarren/selene" "0.22.0"
