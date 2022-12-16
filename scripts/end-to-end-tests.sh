@@ -39,8 +39,18 @@ verify_gitlab_tool () {
     rm foreman.toml
 }
 
+verify_install_all_before_fail () {
+    write_foreman_toml github NotARealTool "roblox/not-a-real-tool" "0.1.0"
+    echo "$1 = { github = \"$2\", version = \"=$3\" }" >> foreman.toml
+    foreman install
+    verify_tool_version $1 $3
+    rm foreman.toml
+}
+
 verify_github_tool Rojo "rojo-rbx/rojo" "6.0.0"
 verify_github_tool remodel "rojo-rbx/remodel" "0.9.1"
 verify_github_tool stylua "JohnnyMorganz/stylua" "0.11.3"
 
 verify_gitlab_tool darklua "seaofvoices/darklua" "0.7.0"
+
+verify_install_all_before_fail Selene "Kampfkarren/selene" "0.22.0"
