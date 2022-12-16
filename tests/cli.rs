@@ -190,10 +190,9 @@ fn snapshot_install_all_tools_before_failing() {
         &config_path,
         r#"
 [tools]
-stylua = { github = "JohnnyMorganz/StyLua", version = "0.11.3" }
 not-a-real-tool = { github = "Roblox/VeryFakeRepository", version = "0.1.0" }
 badly-formatted-tool = { github = "Roblox/", version = "0.2.0" }
-selene = { source = "Kampfkarren/selene", version = "=0.22.0" }
+also-not-a-real-tool = { github = "Roblox/NotARepository", version = "0.1.0" }
     "#,
     );
 
