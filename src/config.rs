@@ -11,7 +11,7 @@ use crate::{
 #[serde(untagged)]
 pub enum ToolSpec {
     Github {
-        // alias to `source` for backward compatibilty
+        // alias to `source` for backward compatibility
         #[serde(alias = "source")]
         github: String,
         version: VersionReq,
