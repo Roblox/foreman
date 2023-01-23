@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env, fmt};
+use std::{collections::BTreeMap, env, fmt};
 
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
@@ -69,13 +69,13 @@ impl fmt::Display for ToolSpec {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigFile {
-    pub tools: HashMap<String, ToolSpec>,
+    pub tools: BTreeMap<String, ToolSpec>,
 }
 
 impl ConfigFile {
     pub fn new() -> Self {
         Self {
-            tools: HashMap::new(),
+            tools: BTreeMap::new(),
         }
     }
 

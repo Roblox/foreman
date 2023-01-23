@@ -197,10 +197,31 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let mut cache = ToolCache::load(&paths)?;
 
-            for (tool_alias, tool_spec) in &config.tools {
-                let providers = ToolProvider::new(&paths);
-                cache.download_if_necessary(tool_spec, &providers)?;
-                add_self_alias(tool_alias, &paths.bin_dir())?;
+            let providers = ToolProvider::new(&paths);
+
+            let tools_not_downloaded: Vec<String> = config
+                .tools
+                .iter()
+                .filter_map(|(tool_alias, tool_spec)| {
+                    cache
+                        .download_if_necessary(tool_spec, &providers)
+                        .and_then(|_| add_self_alias(tool_alias, &paths.bin_dir()))
+                        .err()
+                        .map(|err| {
+                            log::error!(
+                                "The following error occurred while trying to download tool \"{}\":\n{}",
+                                tool_alias,
+                                err
+                            );
+                            tool_alias.to_string()
+                        })
+                })
+                .collect();
+
+            if !tools_not_downloaded.is_empty() {
+                return Err(ForemanError::ToolsNotDownloaded {
+                    tools: tools_not_downloaded,
+                });
             }
 
             if config.tools.is_empty() {
