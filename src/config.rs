@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::BTreeMap,
     env, fmt,
     ops::{Deref, DerefMut},
 };
@@ -18,7 +18,7 @@ use crate::{
 #[serde(untagged)]
 pub enum ToolSpec {
     Github {
-        // alias to `source` for backward compatibilty
+        // alias to `source` for backward compatibility
         #[serde(alias = "source")]
         github: String,
         version: VersionReq,
@@ -75,16 +75,16 @@ impl fmt::Display for ToolSpec {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ConfigFileTools(HashMap<String, ToolSpec>);
+pub struct ConfigFileTools(BTreeMap<String, ToolSpec>);
 
 impl ConfigFileTools {
     pub fn new() -> ConfigFileTools {
-        Self(HashMap::new())
+        Self(BTreeMap::new())
     }
 }
 
 impl Deref for ConfigFileTools {
-    type Target = HashMap<String, ToolSpec>;
+    type Target = BTreeMap<String, ToolSpec>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -184,7 +184,7 @@ impl<'de> Visitor<'de> for ConfigFileVisitor {
     where
         A: MapAccess<'de>,
     {
-        let mut tools = HashMap::new();
+        let mut tools = BTreeMap::new();
 
         while let Some((key, value)) = map.next_entry()? {
             if tools.contains_key(&key) {
