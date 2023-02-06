@@ -1,5 +1,8 @@
 # Foreman Changelog
 
+## Unreleased
+- Errors when duplicate tools are defined in `foreman.toml` ([#65](https://github.com/Roblox/foreman/pull/65))
+
 ## 1.0.6 (2022-09-28)
 
 - Support `macos-aarch64` as an artifact name for Apple Silicon (arm64) binaries ([#60](https://github.com/Roblox/foreman/pull/60))
