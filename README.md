@@ -105,10 +105,16 @@ an error happened trying to run `github.com/some-org/some-tool@^1.2.3` at `/User
 
 In this case, your foreman installation has mistakenly downloaded an incompatible version of the tool binary due to [an error in the binary file selection logic](https://github.com/Roblox/foreman/pull/53).
 
-To fix this error, take the following steps:
+###  `is not compatible with the version of Windows you're running` Error
+If you're using foreman version 1.1.0 or older, you may encounter an error that reads like this when an existing project adds a Windows binary for the `aarch64` platform (eg Windows Holographic OS for HoloLens)
+
+In this case, your foreman installation has mistakenly downloaded an incompatible version of the tool binary due to [an error in the binary file selection logic](https://github.com/Roblox/foreman/pull/53).
+
+
+To fix both of these error types, take the following steps:
 1. Upgrade your version of `foreman` per [the instructions above](#upgrading).
 2. Delete the `~/.foreman/tool-cache.json` file and the `~/.foreman/tools/` folder (and its contents), as well as the `~/.foreman/bin` folder (as described in the [Upgrading](#upgrading) section above). This should remove any invalid binaries that foreman has cached.
-3. Run `foreman install` to redownload all relevant tools.
+3. Run `foreman install` to re-download all relevant tools.
 
 Your downloaded tools should now work correctly.
 
