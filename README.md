@@ -108,7 +108,7 @@ In this case, your foreman installation has mistakenly downloaded an incompatibl
 ###  `is not compatible with the version of Windows you're running` Error
 If you're using foreman version 1.1.0 or older, you may encounter an error that reads like this when an existing project adds a Windows binary for the `aarch64` platform (eg Windows Holographic OS for HoloLens)
 
-In this case, your foreman installation has mistakenly downloaded an incompatible version of the tool binary due to [an error in the binary file selection logic](https://github.com/Roblox/foreman/pull/53).
+In this case, your foreman installation has mistakenly downloaded an incompatible version of the tool binary due to [yet another error in the binary file selection logic](https://github.com/Roblox/foreman/pull/71).
 
 
 To fix both of these error types, take the following steps:
