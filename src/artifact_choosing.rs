@@ -1,21 +1,11 @@
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-static PLATFORM_KEYWORDS: &[&str] = &[
-    "win64",
-    "windows-x86_64",
-    "windows"
-];
+static PLATFORM_KEYWORDS: &[&str] = &["win64", "windows-x86_64", "windows"];
 
 #[cfg(all(target_os = "windows", target_arch = "i686"))]
-static PLATFORM_KEYWORDS: &[&str] = &[
-    "win32",
-    "windows-i686"
-];
+static PLATFORM_KEYWORDS: &[&str] = &["win32", "windows-i686"];
 
 #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
-static PLATFORM_KEYWORDS: &[&str] = &[
-    "windows-aarch64"
-];
-
+static PLATFORM_KEYWORDS: &[&str] = &["windows-aarch64"];
 
 #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
 static PLATFORM_KEYWORDS: &[&str] = &["macos-x86_64", "darwin-x86_64", "macos", "darwin"];
