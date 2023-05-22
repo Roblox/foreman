@@ -1,4 +1,5 @@
 mod aliaser;
+mod artiaa_auth;
 mod artifact_choosing;
 mod auth_store;
 mod ci_string;
