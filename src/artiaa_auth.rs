@@ -8,8 +8,6 @@ use crate::{
     fs,
 };
 
-// pub static DEFAULT_AUTH_CONFIG: &str = include_str!("../resources/default-auth.toml");
-
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Credentials {
     username: String,
@@ -23,6 +21,7 @@ pub struct Tokens {
 }
 
 impl Tokens {
+    #[allow(dead_code)]
     pub fn load(path: &Path) -> ForemanResult<Self> {
         if let Some(contents) = fs::try_read(path)? {
             let tokens: Tokens = serde_json::from_slice(&contents)
@@ -35,6 +34,7 @@ impl Tokens {
         }
     }
 
+    #[allow(dead_code)]
     pub fn get_credentials(&self, url: &Url) -> Option<&Credentials> {
         if let Some(domain) = url.domain() {
             self.tokens.get(domain)
@@ -53,7 +53,11 @@ mod test {
     use std::str::FromStr;
 
     use super::*;
+    use jsonschema_valid::Config;
+    use serde_json::Value;
     use tempfile::{tempdir, TempDir};
+
+    const SCHEMA: &str = include_str!("../resources/artiaa-format.json");
 
     const EXAMPLE_FILE: &str = r#"{
         "tokens": {
@@ -136,5 +140,15 @@ mod test {
 
         let url = Url::from_str("file://path/to/file").unwrap();
         assert!(tokens.get_credentials(&url).is_none())
+    }
+
+    #[test]
+    fn valid_file_conforms_to_schema() {
+        let schema: Value = serde_json::from_str(SCHEMA).unwrap();
+        let example: Value = serde_json::from_str(EXAMPLE_FILE).unwrap();
+        let cfg = Config::from_schema(&schema, None).unwrap();
+
+        assert!(cfg.validate_schema().is_ok());
+        assert!(cfg.validate(&example).is_ok());
     }
 }
