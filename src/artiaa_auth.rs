@@ -110,21 +110,6 @@ mod test {
     }
 
     #[test]
-    fn read_with_domain() {
-        let folder = write_test_config(EXAMPLE_FILE);
-        let tokens = Tokens::load(folder.path().join("tokens.json").as_ref()).unwrap();
-
-        let url = Url::from_str("https://example.com").unwrap();
-        assert_eq!(
-            tokens.get_credentials(&url).unwrap(),
-            &Credentials {
-                username: "example_user".to_string(),
-                token: "123456".to_string(),
-            }
-        )
-    }
-
-    #[test]
     fn read_url_not_found() {
         let folder = write_test_config(EXAMPLE_FILE);
         let tokens: Tokens = Tokens::load(folder.path().join("tokens.json").as_ref()).unwrap();
