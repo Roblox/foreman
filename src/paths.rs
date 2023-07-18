@@ -48,30 +48,30 @@ impl ForemanPaths {
         self.root_dir.clone()
     }
 
-    fn from_root<P: AsRef<Path>>(&self, path: P) -> PathBuf {
+    fn path_from_root<P: AsRef<Path>>(&self, path: P) -> PathBuf {
         let mut dir = self.root_dir();
         dir.push(path);
         dir
     }
 
     pub fn tools_dir(&self) -> PathBuf {
-        self.from_root("tools")
+        self.path_from_root("tools")
     }
 
     pub fn bin_dir(&self) -> PathBuf {
-        self.from_root("bin")
+        self.path_from_root("bin")
     }
 
     pub fn auth_store(&self) -> PathBuf {
-        self.from_root("auth.toml")
+        self.path_from_root("auth.toml")
     }
 
     pub fn user_config(&self) -> PathBuf {
-        self.from_root("foreman.toml")
+        self.path_from_root("foreman.toml")
     }
 
     pub fn index_file(&self) -> PathBuf {
-        self.from_root("tool-cache.json")
+        self.path_from_root("tool-cache.json")
     }
 
     pub fn create_all(&self) -> Result<(), ForemanError> {
@@ -80,10 +80,10 @@ impl ForemanPaths {
         fs::create_dir_all(self.tools_dir())?;
 
         let config = self.user_config();
-        fs::write_if_not_found(&config, DEFAULT_USER_CONFIG)?;
+        fs::write_if_not_found(config, DEFAULT_USER_CONFIG)?;
 
         let auth = self.auth_store();
-        fs::write_if_not_found(&auth, DEFAULT_AUTH_CONFIG)?;
+        fs::write_if_not_found(auth, DEFAULT_AUTH_CONFIG)?;
 
         Ok(())
     }

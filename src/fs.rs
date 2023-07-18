@@ -13,7 +13,7 @@ use std::{
 pub fn try_read<P: AsRef<Path>>(path: P) -> ForemanResult<Option<Vec<u8>>> {
     let path = path.as_ref();
 
-    match fs::read(&path).map(Some) {
+    match fs::read(path).map(Some) {
         Ok(contents) => Ok(contents),
         Err(err) => {
             if err.kind() == io::ErrorKind::NotFound {
@@ -29,7 +29,7 @@ pub fn try_read<P: AsRef<Path>>(path: P) -> ForemanResult<Option<Vec<u8>>> {
 pub fn try_read_to_string<P: AsRef<Path>>(path: P) -> ForemanResult<Option<String>> {
     let path = path.as_ref();
 
-    match fs::read_to_string(&path).map(Some) {
+    match fs::read_to_string(path).map(Some) {
         Ok(contents) => Ok(contents),
         Err(err) => {
             if err.kind() == io::ErrorKind::NotFound {
@@ -48,9 +48,9 @@ pub fn write_if_not_found<P: AsRef<Path>, C: AsRef<[u8]>>(
 ) -> ForemanResult<()> {
     let path = path.as_ref();
 
-    if let Err(err) = std::fs::metadata(&path) {
+    if let Err(err) = std::fs::metadata(path) {
         if err.kind() == io::ErrorKind::NotFound {
-            write(&path, contents)
+            write(path, contents)
         } else {
             Err(ForemanError::write_error(err, path))
         }
@@ -81,11 +81,11 @@ pub fn copy_from_reader<R: Read + ?Sized, P: AsRef<Path>>(
     dest_path: P,
 ) -> ForemanResult<u64> {
     let dest_path = dest_path.as_ref();
-    let output_file = std::fs::File::create(&dest_path)
-        .map_err(|err| ForemanError::create_file_error(err, &dest_path))?;
+    let output_file = std::fs::File::create(dest_path)
+        .map_err(|err| ForemanError::create_file_error(err, dest_path))?;
     let mut output = BufWriter::new(output_file);
 
-    io::copy(reader, &mut output).map_err(|err| ForemanError::write_error(err, &dest_path))
+    io::copy(reader, &mut output).map_err(|err| ForemanError::write_error(err, dest_path))
 }
 
 /// A wrapper around std::fs::create_dir_all.
