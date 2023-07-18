@@ -54,8 +54,7 @@ verify_install_all_before_fail () {
 
 verify_github_tool Rojo "rojo-rbx/rojo" "7.3.0"
 verify_github_tool remodel "rojo-rbx/remodel" "0.11.0"
-verify_github_tool stylua "JohnnyMorganz/stylua" "0.18.0"
-verify_github_tool luau-lsp "JohnnyMorganz/luau-lsp" "1.22.0"
+verify_github_tool stylua "JohnnyMorganz/stylua" "0.18.10
 verify_github_tool lune "filiptibell/lune" "0.6.7"
 
 verify_gitlab_tool darklua "seaofvoices/darklua" "0.8.0"
