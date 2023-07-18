@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+set -x
 
 verify_tool_version () {
     echo "verify tool" $1
@@ -21,20 +22,20 @@ write_foreman_toml () {
 
 verify_github_tool () {
     write_foreman_toml github $1 $2 $3
-    foreman install
+    cargo run --release -- install
     verify_tool_version $1 $3
     rm foreman.toml
 
     # for compatibility, verify that `source` also works
     write_foreman_toml source $1 $2 $3
-    foreman install
+    cargo run --release -- install
     verify_tool_version $1 $3
     rm foreman.toml
 }
 
 verify_gitlab_tool () {
     write_foreman_toml gitlab $1 $2 $3
-    foreman install
+    cargo run --release -- install
     verify_tool_version $1 $3
     rm foreman.toml
 }
@@ -44,7 +45,7 @@ verify_install_all_before_fail () {
     echo "$1 = { github = \"$2\", version = \"=$3\" }" >> foreman.toml
     {
         # try
-        foreman install
+        cargo run --release -- install
     } || {
         # finally
         verify_tool_version $1 $3
@@ -55,9 +56,8 @@ verify_install_all_before_fail () {
 verify_github_tool Rojo "rojo-rbx/rojo" "7.3.0"
 verify_github_tool remodel "rojo-rbx/remodel" "0.11.0"
 verify_github_tool stylua "JohnnyMorganz/stylua" "0.18.0"
-verify_github_tool luau-lsp "JohnnyMorganz/luau-lsp" "1.22.0"
-verify_github_tool lune "filiptibell/lune" "0.6.7"
+verify_github_tool lune-cli "filiptibell/lune" "0.6.7"
 
 verify_gitlab_tool darklua "seaofvoices/darklua" "0.8.0"
 
-verify_install_all_before_fail selene "Kampfkarren/selene" "0.666.31337"
+verify_install_all_before_fail selene "Kampfkarren/selene" "0.22.0"
