@@ -59,4 +59,4 @@ verify_github_tool lune-cli "filiptibell/lune" "0.6.7"
 
 verify_gitlab_tool darklua "seaofvoices/darklua" "0.8.0"
 
-verify_install_all_before_fail selene "Kampfkarren/selene" "0.25"
+verify_install_all_before_fail selene "Kampfkarren/selene" "0.25.0"
