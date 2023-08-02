@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+## 1.2.0 (2023-08-02)
 - Take into account architecture when downloading binaries for Windows to fix incorrect download of windows-aarch64 assets on win64 hosts ([#71](https://github.com/Roblox/foreman/pull/71))
 - Support all Tier 1 Rust supported platforms {windows, linux, macos}-{x86_64, i686, aarch64} ([#71](https://github.com/Roblox/foreman/pull/71))
 
