@@ -1,6 +1,6 @@
 use std::{
     ffi::OsStr,
-    fs::read_to_string,
+    fs::{canonicalize, read_to_string},
     path::{Path, PathBuf},
 };
 
@@ -36,7 +36,12 @@ impl TestContext {
         );
         let working_directory_display = format!(
             "{}{}",
-            working_directory.path().display(),
+            canonicalize(&working_directory)
+                .expect(
+                    "
+        unable to locate working directory",
+                )
+                .display(),
             std::path::MAIN_SEPARATOR
         );
         Self {
