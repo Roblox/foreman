@@ -118,11 +118,7 @@ fn working_directory_display(dir: &TempDir) -> String {
 
 #[cfg(target_os = "windows")]
 fn working_directory_display(dir: &TempDir) -> String {
-    format!(
-        "{}{}",
-        dir.path().display(),
-        std::path::MAIN_SEPARATOR
-    )
+    format!("{}{}", dir.path().display(), std::path::MAIN_SEPARATOR)
 }
 
 fn write_file(path: &Path, content: &str) {
