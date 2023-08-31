@@ -4,6 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+#[allow(unused_imports)]
+use std::fs::canonicalize;
+
 use assert_cmd::Command;
 use insta::assert_snapshot;
 use tempfile::{tempdir, TempDir};
@@ -34,11 +37,7 @@ impl TestContext {
             home_directory.path().display(),
             std::path::MAIN_SEPARATOR
         );
-        let working_directory_display = format!(
-            "{}{}",
-            working_directory.path().display(),
-            std::path::MAIN_SEPARATOR
-        );
+        let working_directory_display = working_directory_display(&working_directory);
         Self {
             command,
             home_directory,
@@ -101,6 +100,25 @@ impl TestContext {
             assert_snapshot!(snapshot_name, content);
         });
     }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn working_directory_display(dir: &TempDir) -> String {
+    format!(
+        "{}{}",
+        canonicalize(dir)
+            .expect(
+                "
+    unable to locate working directory",
+            )
+            .display(),
+        std::path::MAIN_SEPARATOR
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn working_directory_display(dir: &TempDir) -> String {
+    format!("{}{}", dir.path().display(), std::path::MAIN_SEPARATOR)
 }
 
 fn write_file(path: &Path, content: &str) {
