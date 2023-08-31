@@ -113,7 +113,7 @@ fn working_directory_display(dir: &TempDir) -> String {
             )
             .display(),
         std::path::MAIN_SEPARATOR
-    );
+    )
 }
 
 #[cfg(target_os = "windows")]
