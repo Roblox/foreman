@@ -1,9 +1,16 @@
 [package]
-edition.workspace = true
 name = "artiaa_auth"
-version.workspace = true
-authors.workspace = true
-description.workspace = true
+description = "Simple file parsing for artifactory authentification"
+version = "1.0.0"
+authors = [
+    "Lucien Greathouse <me@lpghatguy.com>",
+    "Matt Hargett <plaztiksyke@gmail.com>",
+]
+license = "MIT"
+homepage = "https://github.com/Roblox/foreman#readme"
+repository = "https://github.com/Roblox/foreman"
+readme = "README.md"
+edition = "2018"
 
 [dependencies]
 reqwest = { version = "0.11.10", features = ["json", "blocking"] }

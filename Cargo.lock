@@ -34,7 +34,7 @@ checksum = "15c4c2c83f81532e5845a733998b6971faca23490340a418e9b72a3ec9de12ea"
 
 [[package]]
 name = "artiaa_auth"
-version = "1.2.0"
+version = "1.0.0"
 dependencies = [
  "jsonschema-valid",
  "log",

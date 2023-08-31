@@ -1,16 +1,2 @@
 [workspace]
 members = ["foreman", "artiaa_auth"]
-
-[workspace.package]
-name = "foreman"
-description = "Toolchain manager for simple binary tools"
-version = "1.2.0"
-authors = [
-  "Lucien Greathouse <me@lpghatguy.com>",
-  "Matt Hargett <plaztiksyke@gmail.com>",
-]
-license = "MIT"
-homepage = "https://github.com/Roblox/foreman#readme"
-repository = "https://github.com/Roblox/foreman"
-readme = "README.md"
-edition = "2018"
