@@ -69,4 +69,4 @@ jobs:
         cargo install --path ./foreman
         foreman --version
         PATH=$PATH:~/.foreman/bin
-        ./scripts/end-to-end-tests.sh
+        ./foreman/scripts/end-to-end-tests.sh
