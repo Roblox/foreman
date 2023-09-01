@@ -1,4 +1,4 @@
-use std::{io, path::PathBuf};
+use std::{fmt, io, path::PathBuf};
 pub type ArtifactoryAuthResult<T> = Result<T, ArtifactoryAuthError>;
 
 #[derive(Debug)]
@@ -25,6 +25,34 @@ impl ArtifactoryAuthError {
         Self::Write {
             source,
             path: path.into(),
+        }
+    }
+}
+
+const ARTIFACTORY_AUTH_HELP: &str = include_str!("../../resources/artiaa-format.json");
+
+impl fmt::Display for ArtifactoryAuthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::FileParse { source, path } => write!(
+                f,
+                "unable to parse Artifactory authentication file (at {}): {}\n\nAn Artifactory authentication file looks like this\n\n{}",
+                path.display(),
+                source,
+                ARTIFACTORY_AUTH_HELP
+            ),
+            Self::Read { source, path } => write!(
+                f,
+                "an error happened trying to read {}: {}",
+                path.display(),
+                source
+            ),
+            Self::Write { source, path } => write!(
+                f,
+                "an error happened trying to write {}: {}",
+                path.display(),
+                source
+            ),
         }
     }
 }

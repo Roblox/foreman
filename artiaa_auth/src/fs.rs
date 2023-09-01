@@ -26,7 +26,7 @@ pub fn try_read<P: AsRef<Path>>(path: P) -> ArtifactoryAuthResult<Option<Vec<u8>
 }
 
 /// A wrapper around std::fs::write.
-#[allow(dead_code)]
+#[cfg(test)]
 pub fn write<P: AsRef<Path>, C: AsRef<[u8]>>(path: P, contents: C) -> ArtifactoryAuthResult<()> {
     let path = path.as_ref();
 

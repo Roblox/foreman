@@ -3,8 +3,8 @@ name = "artiaa_auth"
 description = "Simple file parsing for artifactory authentification"
 version = "1.0.0"
 authors = [
-    "Lucien Greathouse <me@lpghatguy.com>",
-    "Matt Hargett <plaztiksyke@gmail.com>",
+    "Paul Doyle <pdoyle@roblox.com>",
+    "Aiden Fujiwara <afujiwara@roblox.com>",
 ]
 license = "MIT"
 homepage = "https://github.com/Roblox/foreman#readme"
