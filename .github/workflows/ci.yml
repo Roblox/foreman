@@ -34,7 +34,7 @@ jobs:
     strategy:
       matrix:
          os: [windows-latest, ubuntu-latest]
-         rust_version: [stable, "1.60.0"]
+         rust_version: [stable, "1.63.0"]
 
     runs-on:  ${{ matrix.os }}
     steps:
