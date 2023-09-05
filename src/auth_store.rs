@@ -8,7 +8,7 @@ use crate::{
     fs,
 };
 
-pub static DEFAULT_AUTH_CONFIG: &str = include_str!("../../resources/default-auth.toml");
+pub static DEFAULT_AUTH_CONFIG: &str = include_str!("../resources/default-auth.toml");
 
 /// Contains stored user tokens that Foreman can use to download tools.
 #[derive(Debug, Default, Serialize, Deserialize)]

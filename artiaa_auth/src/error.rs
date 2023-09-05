@@ -36,7 +36,7 @@ impl fmt::Display for ArtifactoryAuthError {
         match self {
             Self::FileParse { source, path } => write!(
                 f,
-                "unable to parse Artifactory authentication file (at {}): {}\n\nAn Artifactory authentication file looks like this\n\n{}",
+                "unable to parse Artifactory authentication file (at {}): {}\n\nAn Artifactory authentication file should match this schema:\n\n{}",
                 path.display(),
                 source,
                 ARTIFACTORY_AUTH_HELP

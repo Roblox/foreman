@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use crate::{auth_store::DEFAULT_AUTH_CONFIG, error::ForemanError, fs};
 
-static DEFAULT_USER_CONFIG: &str = include_str!("../../resources/default-foreman.toml");
+static DEFAULT_USER_CONFIG: &str = include_str!("../resources/default-foreman.toml");
 
 const FOREMAN_PATH_ENV_VARIABLE: &str = "FOREMAN_HOME";
 
