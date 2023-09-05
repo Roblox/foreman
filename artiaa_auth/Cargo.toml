@@ -1,0 +1,23 @@
+[package]
+name = "artiaa_auth"
+description = "Simple file parsing for artifactory authentification"
+version = "1.0.0"
+authors = [
+    "Paul Doyle <pdoyle@roblox.com>",
+    "Aiden Fujiwara <afujiwara@roblox.com>",
+]
+license = "MIT"
+homepage = "https://github.com/Roblox/foreman#readme"
+repository = "https://github.com/Roblox/foreman"
+readme = "README.md"
+edition = "2018"
+
+[dependencies]
+reqwest = { version = "0.11.10", features = ["json", "blocking"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4.17"
+
+[dev-dependencies]
+tempfile = "3.3.0"
+jsonschema-valid = "0.5.1"

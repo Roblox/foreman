@@ -1,12 +1,12 @@
+mod error;
+mod fs;
+
 use std::{collections::HashMap, path::Path};
 
 use reqwest::Url;
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::{ForemanError, ForemanResult},
-    fs,
-};
+use crate::error::{ArtifactoryAuthError, ArtifactoryAuthResult};
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Credentials {
@@ -14,7 +14,7 @@ pub struct Credentials {
     token: String,
 }
 
-/// Contains stored user tokens that Foreman can use to download tools.
+/// Contains stored user tokens that are used to download artifacts from Artifactory.
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Tokens {
     tokens: HashMap<String, Credentials>,
@@ -22,10 +22,10 @@ pub struct Tokens {
 
 impl Tokens {
     #[allow(dead_code)]
-    pub fn load(path: &Path) -> ForemanResult<Self> {
+    pub fn load(path: &Path) -> ArtifactoryAuthResult<Self> {
         if let Some(contents) = fs::try_read(path)? {
             let tokens: Tokens = serde_json::from_slice(&contents)
-                .map_err(|error| ForemanError::auth_parsing(path, error.to_string()))?;
+                .map_err(|error| ArtifactoryAuthError::auth_parsing(path, error.to_string()))?;
 
             Ok(tokens)
         } else {
@@ -57,7 +57,7 @@ mod test {
     use serde_json::Value;
     use tempfile::{tempdir, TempDir};
 
-    const SCHEMA: &str = include_str!("../resources/artiaa-format.json");
+    const SCHEMA: &str = include_str!("../../resources/artiaa-format.json");
 
     const EXAMPLE_FILE: &str = r#"{
         "tokens": {
