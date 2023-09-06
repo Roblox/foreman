@@ -1,11 +1,9 @@
-use std::{collections::BTreeMap, env, fmt};
-
-use semver::VersionReq;
-use serde::{Deserialize, Serialize};
-
 use crate::{
     ci_string::CiString, error::ForemanError, fs, paths::ForemanPaths, tool_provider::Provider,
 };
+use semver::VersionReq;
+use serde::{Deserialize, Serialize};
+use std::{collections::BTreeMap, env, fmt};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -20,6 +18,11 @@ pub enum ToolSpec {
         gitlab: String,
         version: VersionReq,
     },
+    Artifactory {
+        artifactory: String,
+        path: String,
+        version: VersionReq,
+    },
 }
 
 impl ToolSpec {
@@ -27,20 +30,30 @@ impl ToolSpec {
         match self {
             ToolSpec::Github { github, .. } => CiString(github.clone()),
             ToolSpec::Gitlab { gitlab, .. } => CiString(format!("gitlab@{}", gitlab)),
+            ToolSpec::Artifactory { artifactory, .. } => CiString(artifactory.clone()),
         }
     }
 
-    pub fn source(&self) -> &str {
+    pub fn source(&self) -> String {
         match self {
             ToolSpec::Github { github: source, .. } | ToolSpec::Gitlab { gitlab: source, .. } => {
-                source
+                source.to_owned()
+            }
+            ToolSpec::Artifactory {
+                artifactory: source,
+                path,
+                ..
+            } => {
+                format!("{}/{}", source, path) //might want to use Url crate to enforce propper paths
             }
         }
     }
 
     pub fn version(&self) -> &VersionReq {
         match self {
-            ToolSpec::Github { version, .. } | ToolSpec::Gitlab { version, .. } => version,
+            ToolSpec::Github { version, .. }
+            | ToolSpec::Gitlab { version, .. }
+            | ToolSpec::Artifactory { version, .. } => version,
         }
     }
 
@@ -48,22 +61,19 @@ impl ToolSpec {
         match self {
             ToolSpec::Github { .. } => Provider::Github,
             ToolSpec::Gitlab { .. } => Provider::Gitlab,
+            ToolSpec::Artifactory { .. } => Provider::Artifactory,
         }
     }
 }
 
 impl fmt::Display for ToolSpec {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}.com/{}@{}",
-            match self {
-                ToolSpec::Github { .. } => "github",
-                ToolSpec::Gitlab { .. } => "gitlab",
-            },
-            self.source(),
-            self.version(),
-        )
+        let res = match self {
+            ToolSpec::Github { .. } => format!("github.com/{}@{}", self.source(), self.version()),
+            ToolSpec::Gitlab { .. } => format!("gitlab.com/{}@{}", self.source(), self.version()),
+            ToolSpec::Artifactory { .. } => format!("{}@{}", self.source(), self.version()),
+        };
+        write!(f, "{}", res)
     }
 }
 
@@ -152,10 +162,18 @@ mod test {
         }
     }
 
-    fn new_gitlab<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
+    fn new_gitlab<S: Into<String>>(gitlab: S, version: VersionReq) -> ToolSpec {
         ToolSpec::Gitlab {
-            gitlab: github.into(),
+            gitlab: gitlab.into(),
             version,
+        }
+    }
+
+    fn new_artifactory<S: Into<String>>(artifactory: S, path: S, version: VersionReq) -> ToolSpec {
+        ToolSpec::Artifactory {
+            artifactory: artifactory.into(),
+            path: path.into(),
+            version: version,
         }
     }
 
@@ -188,6 +206,27 @@ mod test {
                 toml::from_str(&[r#"gitlab = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
             assert_eq!(gitlab, new_gitlab("user/repo", version("0.1.0")));
+        }
+
+        #[test]
+        fn artifactory_from_artifactory_field() {
+            let artifactory: ToolSpec = toml::from_str(
+                &[
+                    r#"artifactory = "https://artifactory-edge1.rbx.com""#,
+                    r#"path = "generic-rbx-local-tools/rotriever/""#,
+                    r#"version = "0.5.4""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+            assert_eq!(
+                artifactory,
+                new_artifactory(
+                    "https://artifactory-edge1.rbx.com",
+                    "generic-rbx-local-tools/rotriever/",
+                    version("0.5.4"),
+                )
+            );
         }
     }
 

@@ -71,6 +71,9 @@ pub enum ForemanError {
     ToolsNotDownloaded {
         tools: Vec<String>,
     },
+    Other {
+        message: String,
+    },
 }
 
 impl ForemanError {
@@ -307,6 +310,9 @@ impl fmt::Display for ForemanError {
             ),
             Self::ToolsNotDownloaded { tools } => {
                 write!(f, "The following tools were not installed:\n{:#?}", tools)
+            }
+            Self::Other { message } => {
+                write!(f, "{}", message)
             }
         }
     }
