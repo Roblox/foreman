@@ -44,7 +44,7 @@ impl ToolSpec {
                 path,
                 ..
             } => {
-                format!("{}/{}", source, path) //might want to use Url crate to enforce propper paths
+                format!("{}/{}", source, path)
             }
         }
     }
