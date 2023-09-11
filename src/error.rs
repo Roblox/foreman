@@ -5,7 +5,7 @@ use semver::Version;
 use crate::config::{ConfigFile, ToolSpec};
 
 pub type ForemanResult<T> = Result<T, ForemanError>;
-
+pub type ConfigFileParseResult<T> = Result<T, ConfigFileParseError>;
 #[derive(Debug)]
 pub enum ForemanError {
     IO {
@@ -74,6 +74,14 @@ pub enum ForemanError {
     Other {
         message: String,
     },
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ConfigFileParseError {
+    MissingField { field: String },
+    Tool { tool: String },
+    Host { host: String },
+    InvalidProtocol { protocol: String },
 }
 
 impl ForemanError {
@@ -313,6 +321,23 @@ impl fmt::Display for ForemanError {
             }
             Self::Other { message } => {
                 write!(f, "{}", message)
+            }
+        }
+    }
+}
+
+impl fmt::Display for ConfigFileParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MissingField { field } => write!(f, "missing field `{}`", field),
+            Self::Tool { tool } => {
+                write!(f, "data is not properly formatted for tool:\n\n{}", tool)
+            }
+            Self::Host { host } => {
+                write!(f, "data is not properly formatted for host:\n\n{}", host)
+            }
+            Self::InvalidProtocol { protocol } => {
+                write!(f, "protocol `{}` is not valid. Foreman only supports `github`, `gitlab`, and `artifactory`\n\n", protocol)
             }
         }
     }

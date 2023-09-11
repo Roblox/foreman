@@ -1,91 +1,264 @@
 use crate::{
-    ci_string::CiString, error::ForemanError, fs, paths::ForemanPaths, tool_provider::Provider,
+    ci_string::CiString,
+    error::{ConfigFileParseError, ConfigFileParseResult, ForemanError},
+    fs,
+    paths::ForemanPaths,
+    tool_provider::Provider,
 };
 use semver::VersionReq;
 use serde::{Deserialize, Serialize};
-use std::{collections::BTreeMap, env, fmt};
-
+use std::{
+    collections::{BTreeMap, HashMap},
+    env, fmt,
+};
+use toml::Value;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum ToolSpec {
-    Github {
-        // alias to `source` for backward compatibility
-        #[serde(alias = "source")]
-        github: String,
-        version: VersionReq,
-    },
-    Gitlab {
-        gitlab: String,
-        version: VersionReq,
-    },
-    Artifactory {
-        artifactory: String,
-        path: String,
-        version: VersionReq,
-    },
+pub struct ToolSpec {
+    host: String,
+    path: String,
+    version: VersionReq,
+    protocol: Protocol,
+}
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum Protocol {
+    Github,
+    Gitlab,
+    Artifactory,
 }
 
 impl ToolSpec {
+    pub fn from_value(
+        value: &Value,
+        host_map: &HashMap<String, Host>,
+    ) -> ConfigFileParseResult<Self> {
+        if let Value::Table(mut map) = value.clone() {
+            let version_value =
+                map.remove("version")
+                    .ok_or_else(|| ConfigFileParseError::Tool {
+                        tool: value.to_string(),
+                    })?;
+            let version_str = version_value
+                .as_str()
+                .ok_or_else(|| ConfigFileParseError::Tool {
+                    tool: value.to_string(),
+                })?;
+            let version =
+                VersionReq::parse(version_str).map_err(|_| ConfigFileParseError::Tool {
+                    tool: value.to_string(),
+                })?;
+
+            let (path_val, host_source) = host_map
+                .iter()
+                .find_map(|(potential_host, host_source)| {
+                    if let Some(path) = map.remove(potential_host) {
+                        Some((path, host_source))
+                    } else {
+                        None
+                    }
+                })
+                .ok_or_else(|| ConfigFileParseError::Tool {
+                    tool: value.to_string(),
+                })?;
+
+            // Extraneous fields should in a tool spec definition should not be allowed
+            if !map.is_empty() {
+                return Err(ConfigFileParseError::Tool {
+                    tool: value.to_string(),
+                });
+            }
+
+            let host = host_source.source.to_string();
+            let path = path_val
+                .as_str()
+                .ok_or_else(|| ConfigFileParseError::Tool {
+                    tool: value.to_string(),
+                })?
+                .to_string();
+
+            let protocol = host_source.protocol.clone();
+
+            Ok(Self {
+                host,
+                path,
+                version,
+                protocol,
+            })
+        } else {
+            Err(ConfigFileParseError::Tool {
+                tool: value.to_string(),
+            })
+        }
+    }
+
     pub fn cache_key(&self) -> CiString {
-        match self {
-            ToolSpec::Github { github, .. } => CiString(github.clone()),
-            ToolSpec::Gitlab { gitlab, .. } => CiString(format!("gitlab@{}", gitlab)),
-            ToolSpec::Artifactory { artifactory, .. } => CiString(artifactory.clone()),
+        match self.protocol {
+            Protocol::Github => CiString(format!("{}", self.path)),
+            Protocol::Gitlab => CiString(format!("gitlab@{}", self.path)),
+            Protocol::Artifactory => CiString(format!("{}@{}", self.host, self.path)),
         }
     }
 
     pub fn source(&self) -> String {
-        match self {
-            ToolSpec::Github { github: source, .. } | ToolSpec::Gitlab { gitlab: source, .. } => {
-                source.to_owned()
-            }
-            ToolSpec::Artifactory {
-                artifactory: source,
-                path,
-                ..
-            } => {
-                format!("{}/{}", source, path)
-            }
-        }
+        let provider = match self.protocol {
+            Protocol::Github => "github.com",
+            Protocol::Gitlab => "gitlab.com",
+            Protocol::Artifactory => "artifactory.com",
+        };
+
+        format!("{}/{}", provider, self.path)
+    }
+
+    pub fn path(&self) -> &str {
+        self.path.as_str()
     }
 
     pub fn version(&self) -> &VersionReq {
-        match self {
-            ToolSpec::Github { version, .. }
-            | ToolSpec::Gitlab { version, .. }
-            | ToolSpec::Artifactory { version, .. } => version,
-        }
+        &self.version
     }
 
     pub fn provider(&self) -> Provider {
-        match self {
-            ToolSpec::Github { .. } => Provider::Github,
-            ToolSpec::Gitlab { .. } => Provider::Gitlab,
-            ToolSpec::Artifactory { .. } => Provider::Artifactory,
+        match self.protocol {
+            Protocol::Github => Provider::Github,
+            Protocol::Gitlab => Provider::Gitlab,
+            Protocol::Artifactory => Provider::Artifactory,
         }
     }
 }
 
 impl fmt::Display for ToolSpec {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let res = match self {
-            ToolSpec::Github { .. } => format!("github.com/{}@{}", self.source(), self.version()),
-            ToolSpec::Gitlab { .. } => format!("gitlab.com/{}@{}", self.source(), self.version()),
-            ToolSpec::Artifactory { .. } => format!("{}@{}", self.source(), self.version()),
-        };
-        write!(f, "{}", res)
+        write!(f, "{}@{}", self.source(), self.version())
     }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ConfigFile {
     pub tools: BTreeMap<String, ToolSpec>,
+    pub hosts: HashMap<String, Host>,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct Host {
+    source: String,
+    protocol: Protocol,
+}
+
+impl Host {
+    pub fn new(source: String, protocol: Protocol) -> Self {
+        Self { source, protocol }
+    }
+
+    pub fn from_value(value: &Value) -> ConfigFileParseResult<Self> {
+        if let Value::Table(mut map) = value.clone() {
+            let source = map
+                .remove("source")
+                .ok_or_else(|| ConfigFileParseError::Host {
+                    host: value.to_string(),
+                })?
+                .as_str()
+                .ok_or_else(|| ConfigFileParseError::Host {
+                    host: value.to_string(),
+                })?
+                .to_string();
+
+            let protocol_value =
+                map.remove("protocol")
+                    .ok_or_else(|| ConfigFileParseError::Host {
+                        host: value.to_string(),
+                    })?;
+
+            if !map.is_empty() {
+                return Err(ConfigFileParseError::Host {
+                    host: value.to_string(),
+                });
+            }
+
+            let protocol_str =
+                protocol_value
+                    .as_str()
+                    .ok_or_else(|| ConfigFileParseError::Host {
+                        host: value.to_string(),
+                    })?;
+
+            let protocol = match protocol_str {
+                "github" => Protocol::Github,
+                "gitlab" => Protocol::Gitlab,
+                "artifactory" => Protocol::Artifactory,
+                _ => {
+                    return Err(ConfigFileParseError::InvalidProtocol {
+                        protocol: protocol_str.to_string(),
+                    })
+                }
+            };
+
+            Ok(Self { source, protocol })
+        } else {
+            Err(ConfigFileParseError::Host {
+                host: value.to_string(),
+            })
+        }
+    }
 }
 
 impl ConfigFile {
-    pub fn new() -> Self {
+    pub fn new_with_defaults() -> Self {
         Self {
             tools: BTreeMap::new(),
+            hosts: HashMap::from([
+                (
+                    "source".to_string(),
+                    Host::new("https://github.com".to_string(), Protocol::Github),
+                ),
+                (
+                    "github".to_string(),
+                    Host::new("https://github.com".to_string(), Protocol::Github),
+                ),
+                (
+                    "gitlab".to_string(),
+                    Host::new("https://gitlab.com".to_string(), Protocol::Gitlab),
+                ),
+            ]),
+        }
+    }
+
+    pub fn from_value(value: Value) -> ConfigFileParseResult<Self> {
+        let mut config = ConfigFile::new_with_defaults();
+
+        if let Value::Table(top_level) = &value {
+            if let Some(hosts) = &top_level.get("hosts") {
+                if let Value::Table(hosts) = hosts {
+                    for (host, toml) in hosts {
+                        let host_source =
+                            Host::from_value(&toml).map_err(|_| ConfigFileParseError::Tool {
+                                tool: value.to_string(),
+                            })?;
+                        config.hosts.insert(host.to_owned(), host_source);
+                    }
+                }
+            }
+
+            if let Some(tools) = &top_level.get("tools") {
+                if let Value::Table(tools) = tools {
+                    for (tool, toml) in tools {
+                        let tool_spec =
+                            ToolSpec::from_value(&toml, &config.hosts).map_err(|_| {
+                                ConfigFileParseError::Tool {
+                                    tool: value.to_string(),
+                                }
+                            })?;
+                        config.tools.insert(tool.to_owned(), tool_spec);
+                    }
+                }
+            } else {
+                return Err(ConfigFileParseError::MissingField {
+                    field: "tools".to_string(),
+                });
+            }
+            Ok(config)
+        } else {
+            Err(ConfigFileParseError::Tool {
+                tool: value.to_string(),
+            })
         }
     }
 
@@ -93,10 +266,14 @@ impl ConfigFile {
         for (tool_name, tool_source) in other.tools {
             self.tools.entry(tool_name).or_insert(tool_source);
         }
+
+        for (host_name, host_source) in other.hosts {
+            self.hosts.entry(host_name).or_insert(host_source);
+        }
     }
 
     pub fn aggregate(paths: &ForemanPaths) -> Result<ConfigFile, ForemanError> {
-        let mut config = ConfigFile::new();
+        let mut config = ConfigFile::new_with_defaults();
 
         let base_dir = env::current_dir().map_err(|err| {
             ForemanError::io_error_with_context(
@@ -112,11 +289,9 @@ impl ConfigFile {
             if let Some(contents) = fs::try_read(&config_path)? {
                 let config_source = toml::from_slice(&contents)
                     .map_err(|err| ForemanError::config_parsing(&config_path, err.to_string()))?;
-                log::debug!(
-                    "aggregating content from config file at {}",
-                    config_path.display()
-                );
-                config.fill_from(config_source);
+                let new_config = ConfigFile::from_value(config_source)
+                    .map_err(|err| ForemanError::config_parsing(&config_path, err.to_string()))?;
+                config.fill_from(new_config);
             }
 
             if let Some(parent) = current_dir.parent() {
@@ -130,11 +305,13 @@ impl ConfigFile {
         if let Some(contents) = fs::try_read(&home_config_path)? {
             let config_source = toml::from_slice(&contents)
                 .map_err(|err| ForemanError::config_parsing(&home_config_path, err.to_string()))?;
+            let new_config = ConfigFile::from_value(config_source)
+                .map_err(|err| ForemanError::config_parsing(&home_config_path, err.to_string()))?;
             log::debug!(
                 "aggregating content from config file at {}",
                 home_config_path.display()
             );
-            config.fill_from(config_source);
+            config.fill_from(new_config);
         }
 
         Ok(config)
@@ -156,24 +333,29 @@ mod test {
     use super::*;
 
     fn new_github<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
-        ToolSpec::Github {
-            github: github.into(),
-            version,
+        ToolSpec {
+            host: "https://github.com".to_string(),
+            path: github.into(),
+            version: version,
+            protocol: Protocol::Github,
         }
     }
 
     fn new_gitlab<S: Into<String>>(gitlab: S, version: VersionReq) -> ToolSpec {
-        ToolSpec::Gitlab {
-            gitlab: gitlab.into(),
-            version,
+        ToolSpec {
+            host: "https://gitlab.com".to_string(),
+            path: gitlab.into(),
+            version: version,
+            protocol: Protocol::Gitlab,
         }
     }
 
-    fn new_artifactory<S: Into<String>>(artifactory: S, path: S, version: VersionReq) -> ToolSpec {
-        ToolSpec::Artifactory {
-            artifactory: artifactory.into(),
+    fn new_artifactory<S: Into<String>>(host: S, path: S, version: VersionReq) -> ToolSpec {
+        ToolSpec {
+            host: host.into(),
             path: path.into(),
             version: version,
+            protocol: Protocol::Artifactory,
         }
     }
 
@@ -181,52 +363,162 @@ mod test {
         VersionReq::parse(string).unwrap()
     }
 
+    fn default_host() -> HashMap<String, Host> {
+        HashMap::from([
+            (
+                "source".to_string(),
+                Host::new("https://github.com".to_string(), Protocol::Github),
+            ),
+            (
+                "github".to_string(),
+                Host::new("https://github.com".to_string(), Protocol::Github),
+            ),
+            (
+                "gitlab".to_string(),
+                Host::new("https://gitlab.com".to_string(), Protocol::Gitlab),
+            ),
+        ])
+    }
+
+    fn artifactory_host() -> HashMap<String, Host> {
+        let mut hosts = default_host();
+        hosts.insert(
+            "rbx_artifactory".to_string(),
+            Host::new(
+                "https://artifactory.rbx.com".to_string(),
+                Protocol::Artifactory,
+            ),
+        );
+        hosts
+    }
+
     mod deserialization {
         use super::*;
 
         #[test]
         fn github_from_source_field() {
-            let github: ToolSpec =
+            let value: Value =
                 toml::from_str(&[r#"source = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
+            let github = ToolSpec::from_value(&value, &default_host()).unwrap();
+
+            dbg!("{github}");
             assert_eq!(github, new_github("user/repo", version("0.1.0")));
         }
 
         #[test]
         fn github_from_github_field() {
-            let github: ToolSpec =
+            let value: Value =
                 toml::from_str(&[r#"github = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
+            let github = ToolSpec::from_value(&value, &default_host()).unwrap();
             assert_eq!(github, new_github("user/repo", version("0.1.0")));
         }
 
         #[test]
         fn gitlab_from_gitlab_field() {
-            let gitlab: ToolSpec =
+            let value: Value =
                 toml::from_str(&[r#"gitlab = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
+            let gitlab = ToolSpec::from_value(&value, &default_host()).unwrap();
             assert_eq!(gitlab, new_gitlab("user/repo", version("0.1.0")));
         }
 
         #[test]
         fn artifactory_from_artifactory_field() {
-            let artifactory: ToolSpec = toml::from_str(
+            let value: Value = toml::from_str(
                 &[
-                    r#"artifactory = "https://artifactory-edge1.rbx.com""#,
+                    r#"rbx_artifactory = "generic-rbx-local-tools/rotriever/""#,
+                    r#"version = "0.5.4""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+
+            let artifactory = ToolSpec::from_value(&value, &artifactory_host()).unwrap();
+            assert_eq!(
+                artifactory,
+                new_artifactory(
+                    "https://artifactory.rbx.com",
+                    "generic-rbx-local-tools/rotriever/",
+                    version("0.5.4")
+                )
+            );
+        }
+
+        #[test]
+        fn extraneous_fields_tools() {
+            let value: Value = toml::from_str(
+                &[
+                    r#"rbx_artifactory = "generic-rbx-local-tools/rotriever/""#,
                     r#"path = "generic-rbx-local-tools/rotriever/""#,
                     r#"version = "0.5.4""#,
                 ]
                 .join("\n"),
             )
             .unwrap();
+
+            let artifactory = ToolSpec::from_value(&value, &artifactory_host()).unwrap_err();
             assert_eq!(
                 artifactory,
-                new_artifactory(
-                    "https://artifactory-edge1.rbx.com",
-                    "generic-rbx-local-tools/rotriever/",
-                    version("0.5.4"),
-                )
-            );
+                ConfigFileParseError::Tool {
+                    tool: [
+                        r#"path = "generic-rbx-local-tools/rotriever/""#,
+                        r#"rbx_artifactory = "generic-rbx-local-tools/rotriever/""#,
+                        r#"version = "0.5.4""#,
+                        r#""#,
+                    ]
+                    .join("\n")
+                    .to_string()
+                }
+            )
+        }
+        #[test]
+        fn host_artifactory() {
+            let value: Value = toml::from_str(
+                &[
+                    r#"source = "https://artifactory.com""#,
+                    r#"protocol = "artifactory""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+
+            let host = Host::from_value(&value).unwrap();
+            assert_eq!(
+                host,
+                Host {
+                    source: "https://artifactory.com".to_string(),
+                    protocol: Protocol::Artifactory
+                }
+            )
+        }
+        #[test]
+        fn extraneous_fields_host() {
+            let value: Value = toml::from_str(
+                &[
+                    r#"source = "https://artifactory.com""#,
+                    r#"protocol = "artifactory""#,
+                    r#"extra = "field""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+
+            let err = Host::from_value(&value).unwrap_err();
+            assert_eq!(
+                err,
+                ConfigFileParseError::Host {
+                    host: [
+                        r#"extra = "field""#,
+                        r#"protocol = "artifactory""#,
+                        r#"source = "https://artifactory.com""#,
+                        r#""#,
+                    ]
+                    .join("\n")
+                    .to_string()
+                }
+            )
         }
     }
 
