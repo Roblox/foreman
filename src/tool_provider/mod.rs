@@ -3,10 +3,9 @@ mod gitlab;
 
 use std::{collections::HashMap, fmt};
 
+use crate::{error::ForemanResult, paths::ForemanPaths};
 use github::GithubProvider;
 use gitlab::GitlabProvider;
-
-use crate::{error::ForemanResult, paths::ForemanPaths};
 
 pub trait ToolProviderImpl: fmt::Debug {
     fn get_releases(&self, repo: &str) -> ForemanResult<Vec<Release>>;

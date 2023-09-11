@@ -107,7 +107,7 @@ impl ToolCache {
         log::info!("Downloading {}", tool);
 
         let provider = providers.get(&tool.provider());
-        let releases = provider.get_releases(tool.source())?;
+        let releases = provider.get_releases(tool.path())?;
 
         // Filter down our set of releases to those that are valid versions and
         // have release assets for our current platform.

@@ -5,7 +5,7 @@ use semver::Version;
 use crate::config::{ConfigFile, ToolSpec};
 
 pub type ForemanResult<T> = Result<T, ForemanError>;
-
+pub type ConfigFileParseResult<T> = Result<T, ConfigFileParseError>;
 #[derive(Debug)]
 pub enum ForemanError {
     IO {
@@ -71,6 +71,12 @@ pub enum ForemanError {
     ToolsNotDownloaded {
         tools: Vec<String>,
     },
+}
+
+#[derive(Debug, PartialEq)]
+pub enum ConfigFileParseError {
+    MissingField { field: String },
+    Tool { tool: String },
 }
 
 impl ForemanError {
@@ -307,6 +313,17 @@ impl fmt::Display for ForemanError {
             ),
             Self::ToolsNotDownloaded { tools } => {
                 write!(f, "The following tools were not installed:\n{:#?}", tools)
+            }
+        }
+    }
+}
+
+impl fmt::Display for ConfigFileParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MissingField { field } => write!(f, "missing field `{}`", field),
+            Self::Tool { tool } => {
+                write!(f, "data is not properly formatted for tool:\n\n{}", tool)
             }
         }
     }

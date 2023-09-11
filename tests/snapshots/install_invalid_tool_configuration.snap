@@ -4,7 +4,12 @@ assertion_line: 101
 expression: content
 
 ---
-unable to parse Foreman configuration file (at {{CWD}}foreman.toml): data did not match any variant of untagged enum ToolSpec for key `tools.tool` at line 2 column 1
+unable to parse Foreman configuration file (at {{CWD}}foreman.toml): data is not properly formatted for tool:
+
+[tools.tool]
+invalid = "roblox/tooling"
+version = "0.0.0"
+
 
 A Foreman configuration file looks like this:
 
