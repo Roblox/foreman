@@ -26,6 +26,7 @@ pub struct ToolSpec {
 pub enum Protocol {
     Github,
     Gitlab,
+    Artifactory,
 }
 
 impl ToolSpec {
@@ -96,6 +97,7 @@ impl ToolSpec {
         match self.protocol {
             Protocol::Github => CiString(format!("{}", self.path)),
             Protocol::Gitlab => CiString(format!("gitlab@{}", self.path)),
+            Protocol::Artifactory => CiString(format!("{}@{}", self.host, self.path)),
         }
     }
 
@@ -103,6 +105,7 @@ impl ToolSpec {
         let provider = match self.protocol {
             Protocol::Github => "github.com",
             Protocol::Gitlab => "gitlab.com",
+            Protocol::Artifactory => "artifactory.com",
         };
 
         format!("{}/{}", provider, self.path)
@@ -120,6 +123,7 @@ impl ToolSpec {
         match self.protocol {
             Protocol::Github => Provider::Github,
             Protocol::Gitlab => Provider::Gitlab,
+            Protocol::Artifactory => Provider::Artifactory,
         }
     }
 }
@@ -130,7 +134,7 @@ impl fmt::Display for ToolSpec {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ConfigFile {
     pub tools: BTreeMap<String, ToolSpec>,
     pub hosts: HashMap<String, Host>,
@@ -147,6 +151,57 @@ impl Host {
         Self {
             source: source.into(),
             protocol,
+        }
+    }
+
+    pub fn from_value(value: &Value) -> ConfigFileParseResult<Self> {
+        if let Value::Table(mut map) = value.clone() {
+            let source = map
+                .remove("source")
+                .ok_or_else(|| ConfigFileParseError::Host {
+                    host: value.to_string(),
+                })?
+                .as_str()
+                .ok_or_else(|| ConfigFileParseError::Host {
+                    host: value.to_string(),
+                })?
+                .to_string();
+
+            let protocol_value =
+                map.remove("protocol")
+                    .ok_or_else(|| ConfigFileParseError::Host {
+                        host: value.to_string(),
+                    })?;
+
+            if !map.is_empty() {
+                return Err(ConfigFileParseError::Host {
+                    host: value.to_string(),
+                });
+            }
+
+            let protocol_str =
+                protocol_value
+                    .as_str()
+                    .ok_or_else(|| ConfigFileParseError::Host {
+                        host: value.to_string(),
+                    })?;
+
+            let protocol = match protocol_str {
+                "github" => Protocol::Github,
+                "gitlab" => Protocol::Gitlab,
+                "artifactory" => Protocol::Artifactory,
+                _ => {
+                    return Err(ConfigFileParseError::InvalidProtocol {
+                        protocol: protocol_str.to_string(),
+                    })
+                }
+            };
+
+            Ok(Self { source, protocol })
+        } else {
+            Err(ConfigFileParseError::Host {
+                host: value.to_string(),
+            })
         }
     }
 }
@@ -167,6 +222,18 @@ impl ConfigFile {
         let mut config = ConfigFile::new_with_defaults();
 
         if let Value::Table(top_level) = &value {
+            if let Some(hosts) = &top_level.get("hosts") {
+                if let Value::Table(hosts) = hosts {
+                    for (host, toml) in hosts {
+                        let host_source =
+                            Host::from_value(&toml).map_err(|_| ConfigFileParseError::Tool {
+                                tool: value.to_string(),
+                            })?;
+                        config.hosts.insert(host.to_owned(), host_source);
+                    }
+                }
+            }
+
             if let Some(tools) = &top_level.get("tools") {
                 if let Value::Table(tools) = tools {
                     for (tool, toml) in tools {
@@ -260,6 +327,7 @@ impl fmt::Display for ConfigFile {
 
 #[cfg(test)]
 mod test {
+    const ARTIFACTORY: &'static str = "https://artifactory.com";
     use super::*;
 
     fn new_github<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
@@ -280,8 +348,30 @@ mod test {
         }
     }
 
+    fn new_artifactory<S: Into<String>>(host: S, path: S, version: VersionReq) -> ToolSpec {
+        ToolSpec {
+            host: host.into(),
+            path: path.into(),
+            version: version,
+            protocol: Protocol::Artifactory,
+        }
+    }
+
+    fn new_config(tools: BTreeMap<String, ToolSpec>, hosts: HashMap<String, Host>) -> ConfigFile {
+        let mut config = ConfigFile::new_with_defaults();
+        config.fill_from(ConfigFile { tools, hosts });
+        config
+    }
+
     fn version(string: &str) -> VersionReq {
         VersionReq::parse(string).unwrap()
+    }
+
+    fn new_host<S: Into<String>>(source: S, protocol: Protocol) -> Host {
+        Host {
+            source: source.into(),
+            protocol,
+        }
     }
 
     fn default_hosts() -> HashMap<String, Host> {
@@ -301,7 +391,17 @@ mod test {
         ])
     }
 
+    fn artifactory_host() -> HashMap<String, Host> {
+        let mut hosts = default_hosts();
+        hosts.insert(
+            "artifactory".to_string(),
+            Host::new(ARTIFACTORY.to_string(), Protocol::Artifactory),
+        );
+        hosts
+    }
+
     mod deserialization {
+
         use super::*;
 
         #[test]
@@ -334,30 +434,132 @@ mod test {
         }
 
         #[test]
-        fn extraneous_fields_tools() {
+        fn artifactory_from_artifactory_field() {
             let value: Value = toml::from_str(
                 &[
-                    r#"github = "Roblox/rotriever""#,
-                    r#"path = "Roblox/rotriever""#,
+                    r#"artifactory = "generic-rbx-local-tools/rotriever/""#,
                     r#"version = "0.5.4""#,
                 ]
                 .join("\n"),
             )
             .unwrap();
 
-            let artifactory = ToolSpec::from_value(&value, &default_hosts()).unwrap_err();
+            let artifactory = ToolSpec::from_value(&value, &artifactory_host()).unwrap();
+            assert_eq!(
+                artifactory,
+                new_artifactory(
+                    "https://artifactory.com",
+                    "generic-rbx-local-tools/rotriever/",
+                    version("0.5.4")
+                )
+            );
+        }
+
+        #[test]
+        fn host_artifactory() {
+            let value: Value = toml::from_str(
+                &[
+                    r#"source = "https://artifactory.com""#,
+                    r#"protocol = "artifactory""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+
+            let host = Host::from_value(&value).unwrap();
+            assert_eq!(
+                host,
+                new_host("https://artifactory.com", Protocol::Artifactory)
+            )
+        }
+
+        #[test]
+        fn extraneous_fields_tools() {
+            let value: Value = toml::from_str(
+                &[
+                    r#"rbx_artifactory = "generic-rbx-local-tools/rotriever/""#,
+                    r#"path = "generic-rbx-local-tools/rotriever/""#,
+                    r#"version = "0.5.4""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+
+            let artifactory = ToolSpec::from_value(&value, &artifactory_host()).unwrap_err();
             assert_eq!(
                 artifactory,
                 ConfigFileParseError::Tool {
                     tool: [
-                        r#"github = "Roblox/rotriever""#,
-                        r#"path = "Roblox/rotriever""#,
+                        r#"path = "generic-rbx-local-tools/rotriever/""#,
+                        r#"rbx_artifactory = "generic-rbx-local-tools/rotriever/""#,
                         r#"version = "0.5.4""#,
                         r#""#,
                     ]
                     .join("\n")
                     .to_string()
                 }
+            )
+        }
+
+        #[test]
+        fn extraneous_fields_host() {
+            let value: Value = toml::from_str(
+                &[
+                    r#"source = "https://artifactory.com""#,
+                    r#"protocol = "artifactory""#,
+                    r#"extra = "field""#,
+                ]
+                .join("\n"),
+            )
+            .unwrap();
+
+            let err = Host::from_value(&value).unwrap_err();
+            assert_eq!(
+                err,
+                ConfigFileParseError::Host {
+                    host: [
+                        r#"extra = "field""#,
+                        r#"protocol = "artifactory""#,
+                        r#"source = "https://artifactory.com""#,
+                        r#""#,
+                    ]
+                    .join("\n")
+                    .to_string()
+                }
+            )
+        }
+        #[test]
+        fn config_file_with_hosts() {
+            let value: Value = toml::from_str(&[
+                r#"[hosts]"#,
+                r#"artifactory = {source = "https://artifactory.com", protocol = "artifactory"}"#,
+                r#""#,
+                r#"[tools]"#,
+                r#"tool = {artifactory = "path/to/tool", version = "1.0.0"}"#,
+            ].join("\n"))
+            .unwrap();
+
+            let config = ConfigFile::from_value(value).unwrap();
+            assert_eq!(
+                config,
+                new_config(
+                    BTreeMap::from([(
+                        "tool".to_string(),
+                        ToolSpec {
+                            host: "https://artifactory.com".to_string(),
+                            path: "path/to/tool".to_string(),
+                            version: VersionReq::parse("1.0.0").unwrap(),
+                            protocol: Protocol::Artifactory
+                        }
+                    )]),
+                    HashMap::from([(
+                        "artifactory".to_string(),
+                        Host {
+                            source: "https://artifactory.com".to_string(),
+                            protocol: Protocol::Artifactory
+                        }
+                    )])
+                )
             )
         }
     }

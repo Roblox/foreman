@@ -1,9 +1,11 @@
+mod artifactory;
 mod github;
 mod gitlab;
 
 use std::{collections::HashMap, fmt};
 
 use crate::{error::ForemanResult, paths::ForemanPaths};
+use artifactory::ArtifactoryProvider;
 use github::GithubProvider;
 use gitlab::GitlabProvider;
 
@@ -17,6 +19,7 @@ pub trait ToolProviderImpl: fmt::Debug {
 pub enum Provider {
     Github,
     Gitlab,
+    Artifactory,
 }
 
 impl fmt::Display for Provider {
@@ -27,6 +30,7 @@ impl fmt::Display for Provider {
             match self {
                 Provider::Github => "GitHub",
                 Provider::Gitlab => "GitLab",
+                Provider::Artifactory => "Artifactory",
             }
         )
     }
@@ -47,6 +51,10 @@ impl ToolProvider {
         providers.insert(
             Provider::Gitlab,
             Box::new(GitlabProvider::new(paths.clone())),
+        );
+        providers.insert(
+            Provider::Artifactory,
+            Box::new(ArtifactoryProvider::new(paths.clone())),
         );
         Self { providers }
     }

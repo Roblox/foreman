@@ -64,6 +64,23 @@ As you may already have noticed, the tool name is located at the left side of `=
 
 Previously, foreman was only able to download tools from GitHub and the format used to be `source = "rojo-rbx/rojo"`. For backward compatibility, foreman still supports this format.
 
+### Hosts (Under Construction)
+foreman supports Github and Gitlab as hosts by default, but you can define your own custom hosts as well using a single `hosts` entry and an enumeration of the hosts you want to download tools from, which looks like this.
+
+```toml
+[hosts]
+# default hosts
+# source = {source = "https://github.com", protocol = "github"}
+# github = {source = "https://github.com", protocol = "github"}
+# gitlab = {source = "https://gitlab.com", protocol = "gitlab"}
+artifactory = {souce = "https://artifactory.com", protocol = "artifactory"}
+
+[tools]
+rotrieve = {artifactory = "tools/rotriever", version = "0.5.12"}
+```
+
+foreman currently only supports github, gitlab, and artifactory as protocols.
+
 ### System Tools
 To start using Foreman to manage your system's default tools, create the file `~/.foreman/foreman.toml`.
 
