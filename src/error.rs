@@ -71,12 +71,17 @@ pub enum ForemanError {
     ToolsNotDownloaded {
         tools: Vec<String>,
     },
+    Other {
+        message: String,
+    },
 }
 
 #[derive(Debug, PartialEq)]
 pub enum ConfigFileParseError {
     MissingField { field: String },
     Tool { tool: String },
+    Host { host: String },
+    InvalidProtocol { protocol: String },
 }
 
 impl ForemanError {
@@ -314,6 +319,9 @@ impl fmt::Display for ForemanError {
             Self::ToolsNotDownloaded { tools } => {
                 write!(f, "The following tools were not installed:\n{:#?}", tools)
             }
+            Self::Other { message } => {
+                write!(f, "{}", message)
+            }
         }
     }
 }
@@ -324,6 +332,12 @@ impl fmt::Display for ConfigFileParseError {
             Self::MissingField { field } => write!(f, "missing field `{}`", field),
             Self::Tool { tool } => {
                 write!(f, "data is not properly formatted for tool:\n\n{}", tool)
+            }
+            Self::Host { host } => {
+                write!(f, "data is not properly formatted for host:\n\n{}", host)
+            }
+            Self::InvalidProtocol { protocol } => {
+                write!(f, "protocol `{}` is not valid. Foreman only supports `github`, `gitlab`, and `artifactory`\n\n", protocol)
             }
         }
     }
