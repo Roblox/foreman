@@ -6,20 +6,23 @@ use crate::{
     tool_provider::Provider,
 };
 use semver::VersionReq;
-use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, HashMap},
     env, fmt,
 };
 use toml::Value;
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+
+const GITHUB: &'static str = "https://github.com";
+const GITLAB: &'static str = "https://gitlab.com";
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct ToolSpec {
     host: String,
     path: String,
     version: VersionReq,
     protocol: Protocol,
 }
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Protocol {
     Github,
     Gitlab,
@@ -59,7 +62,7 @@ impl ToolSpec {
                     tool: value.to_string(),
                 })?;
 
-            // Extraneous fields should in a tool spec definition should not be allowed
+            // Extraneous fields in a tool spec definition should not be allowed
             if !map.is_empty() {
                 return Err(ConfigFileParseError::Tool {
                     tool: value.to_string(),
@@ -127,21 +130,24 @@ impl fmt::Display for ToolSpec {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct ConfigFile {
     pub tools: BTreeMap<String, ToolSpec>,
     pub hosts: HashMap<String, Host>,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Host {
     source: String,
     protocol: Protocol,
 }
 
 impl Host {
-    pub fn new(source: String, protocol: Protocol) -> Self {
-        Self { source, protocol }
+    pub fn new<S: Into<String>>(source: S, protocol: Protocol) -> Self {
+        Self {
+            source: source.into(),
+            protocol,
+        }
     }
 }
 
@@ -150,18 +156,9 @@ impl ConfigFile {
         Self {
             tools: BTreeMap::new(),
             hosts: HashMap::from([
-                (
-                    "source".to_string(),
-                    Host::new("https://github.com".to_string(), Protocol::Github),
-                ),
-                (
-                    "github".to_string(),
-                    Host::new("https://github.com".to_string(), Protocol::Github),
-                ),
-                (
-                    "gitlab".to_string(),
-                    Host::new("https://gitlab.com".to_string(), Protocol::Gitlab),
-                ),
+                ("source".to_string(), Host::new(GITHUB, Protocol::Github)),
+                ("github".to_string(), Host::new(GITHUB, Protocol::Github)),
+                ("gitlab".to_string(), Host::new(GITLAB, Protocol::Gitlab)),
             ]),
         }
     }
@@ -267,7 +264,7 @@ mod test {
 
     fn new_github<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
         ToolSpec {
-            host: "https://github.com".to_string(),
+            host: GITHUB.to_string(),
             path: github.into(),
             version: version,
             protocol: Protocol::Github,
@@ -276,7 +273,7 @@ mod test {
 
     fn new_gitlab<S: Into<String>>(gitlab: S, version: VersionReq) -> ToolSpec {
         ToolSpec {
-            host: "https://gitlab.com".to_string(),
+            host: GITLAB.to_string(),
             path: gitlab.into(),
             version: version,
             protocol: Protocol::Gitlab,
@@ -287,19 +284,19 @@ mod test {
         VersionReq::parse(string).unwrap()
     }
 
-    fn default_host() -> HashMap<String, Host> {
+    fn default_hosts() -> HashMap<String, Host> {
         HashMap::from([
             (
                 "source".to_string(),
-                Host::new("https://github.com".to_string(), Protocol::Github),
+                Host::new(GITHUB.to_string(), Protocol::Github),
             ),
             (
                 "github".to_string(),
-                Host::new("https://github.com".to_string(), Protocol::Github),
+                Host::new(GITHUB.to_string(), Protocol::Github),
             ),
             (
                 "gitlab".to_string(),
-                Host::new("https://gitlab.com".to_string(), Protocol::Gitlab),
+                Host::new(GITLAB.to_string(), Protocol::Gitlab),
             ),
         ])
     }
@@ -312,7 +309,7 @@ mod test {
             let value: Value =
                 toml::from_str(&[r#"source = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
-            let github = ToolSpec::from_value(&value, &default_host()).unwrap();
+            let github = ToolSpec::from_value(&value, &default_hosts()).unwrap();
 
             dbg!("{github}");
             assert_eq!(github, new_github("user/repo", version("0.1.0")));
@@ -323,7 +320,7 @@ mod test {
             let value: Value =
                 toml::from_str(&[r#"github = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
-            let github = ToolSpec::from_value(&value, &default_host()).unwrap();
+            let github = ToolSpec::from_value(&value, &default_hosts()).unwrap();
             assert_eq!(github, new_github("user/repo", version("0.1.0")));
         }
 
@@ -332,7 +329,7 @@ mod test {
             let value: Value =
                 toml::from_str(&[r#"gitlab = "user/repo""#, r#"version = "0.1.0""#].join("\n"))
                     .unwrap();
-            let gitlab = ToolSpec::from_value(&value, &default_host()).unwrap();
+            let gitlab = ToolSpec::from_value(&value, &default_hosts()).unwrap();
             assert_eq!(gitlab, new_gitlab("user/repo", version("0.1.0")));
         }
 
@@ -348,7 +345,7 @@ mod test {
             )
             .unwrap();
 
-            let artifactory = ToolSpec::from_value(&value, &default_host()).unwrap_err();
+            let artifactory = ToolSpec::from_value(&value, &default_hosts()).unwrap_err();
             assert_eq!(
                 artifactory,
                 ConfigFileParseError::Tool {
