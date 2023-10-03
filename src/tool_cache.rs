@@ -3,10 +3,8 @@ use std::{
     env::consts::EXE_SUFFIX,
     io::Cursor,
     path::PathBuf,
-    process,
 };
 
-use command_group::CommandGroup;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use zip::ZipArchive;
@@ -18,6 +16,7 @@ use crate::{
     error::{ForemanError, ForemanResult},
     fs,
     paths::ForemanPaths,
+    process,
     tool_provider::{Release, ToolProvider},
 };
 
@@ -61,20 +60,17 @@ impl ToolCache {
 
         log::debug!("Running tool {} ({})", tool, tool_path.display());
 
-        let status = process::Command::new(&tool_path)
-            .args(args)
-            .group_status()
-            .map_err(|err| {
-                ForemanError::io_error_with_context(err,
-                    format!(
-                        "an error happened trying to run `{}` at `{}` (this is an error in Foreman)",
-                        tool,
-                        tool_path.display()
-                    )
-                )
-            })?;
-
-        Ok(status.code().unwrap_or(1))
+        let code = process::run(&tool_path, args).map_err(|err| {
+            ForemanError::io_error_with_context(
+                err,
+                format!(
+                    "an error happened trying to run `{}` at `{}` (this is an error in Foreman)",
+                    tool,
+                    tool_path.display()
+                ),
+            )
+        })?;
+        Ok(code)
     }
 
     pub fn download_if_necessary(

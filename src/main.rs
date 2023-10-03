@@ -6,10 +6,11 @@ mod config;
 mod error;
 mod fs;
 mod paths;
+mod process;
 mod tool_cache;
 mod tool_provider;
 
-use std::{env, ffi::OsStr, process};
+use std::{env, ffi::OsStr};
 
 use paths::ForemanPaths;
 use structopt::StructOpt;
@@ -67,7 +68,7 @@ impl ToolInvocation {
             let exit_code = tool_cache.run(tool_spec, &version, self.args)?;
 
             if exit_code != 0 {
-                process::exit(exit_code);
+                std::process::exit(exit_code);
             }
 
             Ok(())
@@ -116,7 +117,7 @@ fn main() {
 
 fn exit_with_error(error: ForemanError) -> ! {
     eprintln!("{}", error);
-    process::exit(1);
+    std::process::exit(1);
 }
 
 #[derive(Debug, StructOpt)]

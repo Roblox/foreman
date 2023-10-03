@@ -34,6 +34,13 @@ toml_edit = "0.14.4"
 urlencoding = "2.1.0"
 zip = "0.5"
 
+[target.'cfg(windows)'.dependencies]
+command-group = "1.0.8"
+
+[target.'cfg(unix)'.dependencies]
+tokio = { version = "1.18.2", features = ["macros", "sync", "process"] }
+signal-hook = "0.3.14"
+
 [dev_dependencies]
 assert_cmd = "2.0.2"
 insta = "1.14"
