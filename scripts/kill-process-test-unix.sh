@@ -1,3 +1,5 @@
+#!/bin/bash
+
 write_foreman_toml () {
     echo "[tools]" > foreman.toml
     echo "$2 = { $1 = \"$3\", version = \"=$4\" }" >> foreman.toml
