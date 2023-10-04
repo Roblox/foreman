@@ -63,19 +63,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: install and set up foreman
+    - name: End-to-end tests
       shell: bash
       run: |
         cargo install --path .
         foreman --version
         PATH=$PATH:~/.foreman/bin
-
-    - name: End-to-end tests
-      shell: bash
-      run: ./scripts/end-to-end-tests.sh
+        ./scripts/end-to-end-tests.sh
 
     - name: kill-process-test-unix
       shell: bash
-      run: ./scripts/kill-process-test-unix.sh
+      run: |
+        cargo install --path .
+        foreman --version
+        PATH=$PATH:~/.foreman/bin
+        ./scripts/kill-process-test-unix.sh
 
 
