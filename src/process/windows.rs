@@ -1,3 +1,5 @@
+//Original source from https://github.com/LPGhatguy/aftman/blob/d3f8d1fac4c89d9163f8f3a0c97fa33b91294fea/src/process/windows.rs
+
 //! On Windows, we use command_group to spawn processes in a job group that will
 //! be automatically cleaned up when this process exits.
 

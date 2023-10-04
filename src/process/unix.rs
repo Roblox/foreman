@@ -1,3 +1,5 @@
+//Original source from https://github.com/LPGhatguy/aftman/blob/d3f8d1fac4c89d9163f8f3a0c97fa33b91294fea/src/process/unix.rs
+
 //! On Unix, we use tokio to spawn processes so that we can listen for signals
 //! and wait for process completion at the same time.
 
