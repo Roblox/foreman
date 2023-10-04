@@ -70,3 +70,21 @@ jobs:
         foreman --version
         PATH=$PATH:~/.foreman/bin
         ./scripts/end-to-end-tests.sh
+  kill-process-test-unix:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: End-to-end tests
+      shell: bash
+      run: |
+        cargo install --path .
+        foreman --version
+        PATH=$PATH:~/.foreman/bin
+        ./scripts/kill-process-test-unix.sh
