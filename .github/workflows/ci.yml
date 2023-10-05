@@ -78,6 +78,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     needs: build
+    steps:
+    - uses: actions/checkout@v2
+
     - name: kill-process-test-unix
       shell: bash
       run: |
@@ -92,6 +95,9 @@ jobs:
         os: [windows-latest]
     runs-on: ${{ matrix.os }}
     needs: build
+    steps:
+    - uses: actions/checkout@v2
+
     - name: kill-process-test-windows
       shell: pwsh
       run: |
