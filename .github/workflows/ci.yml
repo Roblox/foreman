@@ -71,6 +71,7 @@ jobs:
         PATH=$PATH:~/.foreman/bin
         ./scripts/end-to-end-tests.sh
 
+  kill-process-test-unix:
     - name: kill-process-test-unix
       shell: bash
       run: |
@@ -78,5 +79,13 @@ jobs:
         foreman --version
         PATH=$PATH:~/.foreman/bin
         ./scripts/kill-process-test-unix.sh
-
+          
+  kill-process-test-windows:
+    - name: kill-process-test-windows
+      shell: pwsh
+      run: |
+        cargo install --path .
+        foreman --version
+        PATH=$PATH:~/.foreman/bin
+        ./scripts/kill-process-test-windows.ps1
 

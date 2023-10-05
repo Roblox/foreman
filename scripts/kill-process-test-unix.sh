@@ -1,11 +1,13 @@
 #!/bin/bash
 
 write_foreman_toml () {
+    echo "writing foreman.toml"
     echo "[tools]" > foreman.toml
     echo "$2 = { $1 = \"$3\", version = \"=$4\" }" >> foreman.toml
 }
 
 create_rojo_files() {
+    echo "writing default.project.json"
     echo "{
         \"name\": \"test\",
         \"tree\": {
@@ -20,21 +22,22 @@ setup_rojo() {
     create_rojo_files
 }
 
-delay_kill_process_and_check() {
+kill_process_and_check_delayed() {
     echo "waiting 5 seconds before killing rojo"
     sleep 5
-    ps -ef | grep "rojo serve" | grep -v grep
     ps -ef | grep "rojo serve" | grep -v grep | awk '{print $2}' | xargs kill -INT
-    ps -ef | grep "rojo serve" | grep -v grep
+    echo "waiting 5 seconds for rojo to be killed"
+    sleep 5
     check_killed_subprocess
 }
 
 run_rojo_serve_and_kill_process() {
     setup_rojo
-    (rojo serve default.project.json) & (delay_kill_process_and_check)
+    (rojo serve default.project.json) & (kill_process_and_check_delayed)
 }
 
 check_killed_subprocess(){
+    echo "checking if process was killed properly"
     if ps -ef | grep "rojo" | grep -v grep 
     then 
         echo "rojo subprocess was not killed properly"
