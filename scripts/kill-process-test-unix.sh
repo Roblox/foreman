@@ -21,9 +21,11 @@ setup_rojo() {
 }
 
 delay_kill_process_and_check() {
-    sleep 5
     echo "waiting 5 seconds before killing rojo"
+    sleep 5
+    ps -ef | grep "rojo serve" | grep -v grep
     ps -ef | grep "rojo serve" | grep -v grep | awk '{print $2}' | xargs kill -INT
+    ps -ef | grep "rojo serve" | grep -v grep
     check_killed_subprocess
 }
 
