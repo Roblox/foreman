@@ -70,11 +70,11 @@ jobs:
         foreman --version
         PATH=$PATH:~/.foreman/bin
         ./scripts/end-to-end-tests.sh
-
+  
   kill-process-test-unix:
     strategy:
-    matrix:
-      os: [ubuntu-latest]
+      matrix:
+        os: [ubuntu-latest]
 
     runs-on: ${{ matrix.os }}
     needs: build
@@ -88,8 +88,8 @@ jobs:
           
   kill-process-test-windows:
     strategy:
-    matrix:
-      os: [windows-latest]
+      matrix:
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     needs: build
     - name: kill-process-test-windows
