@@ -3,7 +3,7 @@ use std::{fmt, io, path::PathBuf};
 use semver::Version;
 
 use crate::config::{ConfigFile, ToolSpec};
-
+use artiaa_auth::error::ArtifactoryAuthError;
 pub type ForemanResult<T> = Result<T, ForemanError>;
 pub type ConfigFileParseResult<T> = Result<T, ConfigFileParseError>;
 #[derive(Debug)]
@@ -71,8 +71,11 @@ pub enum ForemanError {
     ToolsNotDownloaded {
         tools: Vec<String>,
     },
-    Other {
-        message: String,
+    EnvVarNotFound {
+        env_var: String,
+    },
+    ArtiAAError {
+        error: ArtifactoryAuthError,
     },
 }
 
@@ -319,8 +322,11 @@ impl fmt::Display for ForemanError {
             Self::ToolsNotDownloaded { tools } => {
                 write!(f, "The following tools were not installed:\n{:#?}", tools)
             }
-            Self::Other { message } => {
-                write!(f, "{}", message)
+            Self::EnvVarNotFound { env_var } => {
+                write!(f, "Environment Variable not found: {}", env_var)
+            }
+            Self::ArtiAAError { error } => {
+                write!(f, "{}", error)
             }
         }
     }

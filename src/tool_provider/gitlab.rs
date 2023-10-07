@@ -6,13 +6,13 @@ use reqwest::{
 };
 use serde::{Deserialize, Serialize};
 
+use super::{Release, ReleaseAsset, ToolProviderImpl};
 use crate::{
     auth_store::AuthStore,
     error::{ForemanError, ForemanResult},
     paths::ForemanPaths,
 };
-
-use super::{Release, ReleaseAsset, ToolProviderImpl};
+use url::Url;
 
 #[derive(Debug, Default)]
 pub struct GitlabProvider {
@@ -26,7 +26,7 @@ impl GitlabProvider {
 }
 
 impl ToolProviderImpl for GitlabProvider {
-    fn get_releases(&self, repo: &str) -> ForemanResult<Vec<Release>> {
+    fn get_releases(&self, repo: &str, _host: &Url) -> ForemanResult<Vec<Release>> {
         let client = Client::new();
 
         let url = format!(

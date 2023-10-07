@@ -33,6 +33,8 @@ toml = "0.5.9"
 toml_edit = "0.14.4"
 urlencoding = "2.1.0"
 zip = "0.5"
+url = "2.4.1"
+artiaa_auth = { path = "./artiaa_auth" }
 
 [target.'cfg(windows)'.dependencies]
 command-group = "1.0.8"
