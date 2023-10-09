@@ -59,10 +59,11 @@ impl ToolProviderImpl for ArtifactoryProvider {
         let mut releases: Vec<ArtifactoryRelease> = Vec::new();
         let mut release_map: HashMap<&str, Vec<ArtifactoryAsset>> = HashMap::new();
         for file in &response.files {
-            let uri = file.uri.split("/").collect::<Vec<&str>>();
+            let mut uri = file.uri.split("/");
             // file.uri will look something like /<version>/<artifact-name>, so uri will be ["", <version>, <artifact-name]
-            let version = uri.get(1).unwrap();
-            let asset_name = uri.get(2).unwrap();
+            uri.next();
+            let version = uri.next().unwrap();
+            let asset_name = uri.next().unwrap();
 
             let asset_url = format!("{}artifactory/{}/{}/{}", host, repo, version, asset_name);
 

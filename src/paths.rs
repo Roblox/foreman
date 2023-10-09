@@ -106,7 +106,7 @@ fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
         env_var: "%$LOCALAPPDATA%".to_string(),
     })?;
     Ok(PathBuf::from(format!(
-        "{}/ArtiAA/artiaa-tokens.json",
+        "{}\\ArtiAA\\artiaa-tokens.json",
         localappdata
     )))
 }
