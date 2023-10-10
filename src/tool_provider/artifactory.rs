@@ -59,11 +59,16 @@ impl ToolProviderImpl for ArtifactoryProvider {
         let mut releases: Vec<ArtifactoryRelease> = Vec::new();
         let mut release_map: HashMap<&str, Vec<ArtifactoryAsset>> = HashMap::new();
         for file in &response.files {
-            let mut uri = file.uri.split("/");
-            // file.uri will look something like /<version>/<artifact-name>, so uri will be ["", <version>, <artifact-name]
-            uri.next();
-            let version = uri.next().unwrap();
-            let asset_name = uri.next().unwrap();
+            let uri = file.uri.split("/");
+            // file.uri should look something like /<version>/<artifact-name>, so uri will be ["", <version>, <artifact-name]
+            // we should skip files that do not follow the expected path
+            let Some((version, asset_name)) = get_version_and_asset_name(uri) else {
+                log::debug!(
+                    "Skipping '{}', does not match expected file path <version>/<asset_name>",
+                    file.uri
+                );
+                continue;
+            };
 
             let asset_url = format!("{}artifactory/{}/{}/{}", host, repo, version, asset_name);
 
@@ -104,6 +109,33 @@ impl ToolProviderImpl for ArtifactoryProvider {
             .map_err(ForemanError::request_failed)?;
         Ok(output)
     }
+}
+
+fn get_version_and_asset_name<'a, I>(mut uri: I) -> Option<(&'a str, &'a str)>
+where
+    I: Iterator<Item = &'a str>,
+{
+    let Some(empty_string) = uri.next() else {
+        return None;
+    };
+
+    if empty_string != "" {
+        return None;
+    }
+
+    let Some(version) = uri.next() else {
+        return None;
+    };
+
+    let Some(asset_name) = uri.next() else {
+        return None;
+    };
+
+    if uri.next().is_some() {
+        return None;
+    }
+
+    Some((version, asset_name))
 }
 
 #[derive(Debug, Serialize, Deserialize)]
