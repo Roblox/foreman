@@ -56,7 +56,6 @@ impl ToolProviderImpl for ArtifactoryProvider {
                 ForemanError::unexpected_response_body(err.to_string(), response_body, url)
             })?;
 
-        let mut releases: Vec<ArtifactoryRelease> = Vec::new();
         let mut release_map: HashMap<&str, Vec<ArtifactoryAsset>> = HashMap::new();
         for file in &response.files {
             let uri = file.uri.split("/");
@@ -80,12 +79,14 @@ impl ToolProviderImpl for ArtifactoryProvider {
             release_map.entry(version).or_insert(Vec::new()).push(asset);
         }
 
-        for (version, assets) in release_map {
-            releases.push(ArtifactoryRelease {
+        let releases: Vec<ArtifactoryRelease> = release_map
+            .into_iter()
+            .map(|(version, assets)| ArtifactoryRelease {
                 tag_name: version.to_string(),
                 assets,
             })
-        }
+            .collect();
+
         Ok(releases.into_iter().map(Into::into).collect())
     }
 
