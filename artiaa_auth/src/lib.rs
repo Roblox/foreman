@@ -1,4 +1,4 @@
-mod error;
+pub mod error;
 mod fs;
 
 use std::{collections::HashMap, path::Path};
@@ -10,8 +10,8 @@ use crate::error::{ArtifactoryAuthError, ArtifactoryAuthResult};
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Credentials {
-    username: String,
-    token: String,
+    pub username: String,
+    pub token: String,
 }
 
 /// Contains stored user tokens that are used to download artifacts from Artifactory.
@@ -21,7 +21,6 @@ pub struct Tokens {
 }
 
 impl Tokens {
-    #[allow(dead_code)]
     pub fn load(path: &Path) -> ArtifactoryAuthResult<Self> {
         if let Some(contents) = fs::try_read(path)? {
             let tokens: Tokens = serde_json::from_slice(&contents)
@@ -34,7 +33,6 @@ impl Tokens {
         }
     }
 
-    #[allow(dead_code)]
     pub fn get_credentials(&self, url: &Url) -> Option<&Credentials> {
         if let Some(domain) = url.domain() {
             self.tokens.get(domain)

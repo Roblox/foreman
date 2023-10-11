@@ -1,8 +1,15 @@
 //! Contains all of the paths that Foreman needs to deal with.
 
-use std::path::{Path, PathBuf};
+use std::{
+    env,
+    path::{Path, PathBuf},
+};
 
-use crate::{auth_store::DEFAULT_AUTH_CONFIG, error::ForemanError, fs};
+use crate::{
+    auth_store::DEFAULT_AUTH_CONFIG,
+    error::{ForemanError, ForemanResult},
+    fs,
+};
 
 static DEFAULT_USER_CONFIG: &str = include_str!("../resources/default-foreman.toml");
 
@@ -20,7 +27,7 @@ impl ForemanPaths {
             .ok()
             .and_then(|path| {
                 if path.is_dir() {
-                    Some(Self { root_dir:path })
+                    Some(Self { root_dir: path })
                 } else {
                     if path.exists() {
                         log::warn!(
@@ -87,6 +94,48 @@ impl ForemanPaths {
 
         Ok(())
     }
+
+    pub fn artiaa_path(&self) -> ForemanResult<PathBuf> {
+        get_artiaa_path_based_on_os()
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
+    let localappdata = env::var("LOCALAPPDATA").map_err(|_| ForemanError::EnvVarNotFound {
+        env_var: "%$LOCALAPPDATA%".to_string(),
+    })?;
+    Ok(PathBuf::from(format!(
+        "{}\\ArtiAA\\artiaa-tokens.json",
+        localappdata
+    )))
+}
+
+#[cfg(target_os = "macos")]
+fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
+    let home = env::var("HOME").map_err(|_| ForemanError::EnvVarNotFound {
+        env_var: "$HOME".to_string(),
+    })?;
+    Ok(PathBuf::from(format!(
+        "{}/Library/Application Support/ArtiAA/artiaa-tokens.json",
+        home
+    )))
+}
+
+#[cfg(all(not(target_os = "macos"), target_family = "unix"))]
+fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
+    let xdg_data_home = env::var("XDG_DATA_HOME").map_err(|_| ForemanError::EnvVarNotFound {
+        env_var: "$XDG_DATA_HOME".to_string(),
+    })?;
+    Ok(PathBuf::from(format!(
+        "{}/ArtiAA/artiaa-tokens.json",
+        xdg_data_home
+    )))
+}
+
+#[cfg(other)]
+fn get_artiaa_path_based_on_os() -> PathBuf {
+    unimplemented!("artiaa_path is only defined for windows or unix operating systems")
 }
 
 impl Default for ForemanPaths {

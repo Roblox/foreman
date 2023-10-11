@@ -11,13 +11,14 @@ use std::{
     env, fmt,
 };
 use toml::Value;
+use url::Url;
 
 const GITHUB: &'static str = "https://github.com";
 const GITLAB: &'static str = "https://gitlab.com";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ToolSpec {
-    host: String,
+    host: Url,
     path: String,
     version: VersionReq,
     protocol: Protocol,
@@ -70,7 +71,7 @@ impl ToolSpec {
                 });
             }
 
-            let host = host_source.source.to_string();
+            let host = host_source.source.to_owned();
             let path = path_val
                 .as_str()
                 .ok_or_else(|| ConfigFileParseError::Tool {
@@ -126,6 +127,10 @@ impl ToolSpec {
             Protocol::Artifactory => Provider::Artifactory,
         }
     }
+
+    pub fn host(&self) -> &Url {
+        &self.host
+    }
 }
 
 impl fmt::Display for ToolSpec {
@@ -142,21 +147,18 @@ pub struct ConfigFile {
 
 #[derive(Debug, PartialEq)]
 pub struct Host {
-    source: String,
+    source: Url,
     protocol: Protocol,
 }
 
 impl Host {
-    pub fn new<S: Into<String>>(source: S, protocol: Protocol) -> Self {
-        Self {
-            source: source.into(),
-            protocol,
-        }
+    pub fn new(source: Url, protocol: Protocol) -> Self {
+        Self { source, protocol }
     }
 
     pub fn from_value(value: &Value) -> ConfigFileParseResult<Self> {
         if let Value::Table(mut map) = value.clone() {
-            let source = map
+            let source_string = map
                 .remove("source")
                 .ok_or_else(|| ConfigFileParseError::Host {
                     host: value.to_string(),
@@ -167,6 +169,9 @@ impl Host {
                 })?
                 .to_string();
 
+            let source = Url::parse(&source_string).map_err(|_| ConfigFileParseError::Host {
+                host: value.to_string(),
+            })?;
             let protocol_value =
                 map.remove("protocol")
                     .ok_or_else(|| ConfigFileParseError::Host {
@@ -211,9 +216,18 @@ impl ConfigFile {
         Self {
             tools: BTreeMap::new(),
             hosts: HashMap::from([
-                ("source".to_string(), Host::new(GITHUB, Protocol::Github)),
-                ("github".to_string(), Host::new(GITHUB, Protocol::Github)),
-                ("gitlab".to_string(), Host::new(GITLAB, Protocol::Gitlab)),
+                (
+                    "source".to_string(),
+                    Host::new(Url::parse(GITHUB).unwrap(), Protocol::Github),
+                ),
+                (
+                    "github".to_string(),
+                    Host::new(Url::parse(GITHUB).unwrap(), Protocol::Github),
+                ),
+                (
+                    "gitlab".to_string(),
+                    Host::new(Url::parse(GITLAB).unwrap(), Protocol::Gitlab),
+                ),
             ]),
         }
     }
@@ -332,7 +346,7 @@ mod test {
 
     fn new_github<S: Into<String>>(github: S, version: VersionReq) -> ToolSpec {
         ToolSpec {
-            host: GITHUB.to_string(),
+            host: Url::parse(GITHUB).unwrap(),
             path: github.into(),
             version: version,
             protocol: Protocol::Github,
@@ -341,7 +355,7 @@ mod test {
 
     fn new_gitlab<S: Into<String>>(gitlab: S, version: VersionReq) -> ToolSpec {
         ToolSpec {
-            host: GITLAB.to_string(),
+            host: Url::parse(GITLAB).unwrap(),
             path: gitlab.into(),
             version: version,
             protocol: Protocol::Gitlab,
@@ -350,7 +364,7 @@ mod test {
 
     fn new_artifactory<S: Into<String>>(host: S, path: S, version: VersionReq) -> ToolSpec {
         ToolSpec {
-            host: host.into(),
+            host: Url::parse(host.into().as_str()).unwrap(),
             path: path.into(),
             version: version,
             protocol: Protocol::Artifactory,
@@ -367,26 +381,23 @@ mod test {
         VersionReq::parse(string).unwrap()
     }
 
-    fn new_host<S: Into<String>>(source: S, protocol: Protocol) -> Host {
-        Host {
-            source: source.into(),
-            protocol,
-        }
+    fn new_host(source: Url, protocol: Protocol) -> Host {
+        Host { source, protocol }
     }
 
     fn default_hosts() -> HashMap<String, Host> {
         HashMap::from([
             (
                 "source".to_string(),
-                Host::new(GITHUB.to_string(), Protocol::Github),
+                Host::new(Url::parse(GITHUB).unwrap(), Protocol::Github),
             ),
             (
                 "github".to_string(),
-                Host::new(GITHUB.to_string(), Protocol::Github),
+                Host::new(Url::parse(GITHUB).unwrap(), Protocol::Github),
             ),
             (
                 "gitlab".to_string(),
-                Host::new(GITLAB.to_string(), Protocol::Gitlab),
+                Host::new(Url::parse(GITLAB).unwrap(), Protocol::Gitlab),
             ),
         ])
     }
@@ -395,7 +406,7 @@ mod test {
         let mut hosts = default_hosts();
         hosts.insert(
             "artifactory".to_string(),
-            Host::new(ARTIFACTORY.to_string(), Protocol::Artifactory),
+            Host::new(Url::parse(ARTIFACTORY).unwrap(), Protocol::Artifactory),
         );
         hosts
     }
@@ -469,7 +480,10 @@ mod test {
             let host = Host::from_value(&value).unwrap();
             assert_eq!(
                 host,
-                new_host("https://artifactory.com", Protocol::Artifactory)
+                new_host(
+                    Url::parse("https://artifactory.com").unwrap(),
+                    Protocol::Artifactory
+                )
             )
         }
 
@@ -546,7 +560,7 @@ mod test {
                     BTreeMap::from([(
                         "tool".to_string(),
                         ToolSpec {
-                            host: "https://artifactory.com".to_string(),
+                            host: Url::parse("https://artifactory.com").unwrap(),
                             path: "path/to/tool".to_string(),
                             version: VersionReq::parse("1.0.0").unwrap(),
                             protocol: Protocol::Artifactory
@@ -555,7 +569,7 @@ mod test {
                     HashMap::from([(
                         "artifactory".to_string(),
                         Host {
-                            source: "https://artifactory.com".to_string(),
+                            source: Url::parse("https://artifactory.com").unwrap(),
                             protocol: Protocol::Artifactory
                         }
                     )])

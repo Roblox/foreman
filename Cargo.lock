@@ -392,6 +392,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 name = "foreman"
 version = "1.3.0"
 dependencies = [
+ "artiaa_auth",
  "assert_cmd",
  "command-group",
  "dirs",
@@ -409,6 +410,7 @@ dependencies = [
  "tokio",
  "toml",
  "toml_edit",
+ "url",
  "urlencoding",
  "zip",
 ]
