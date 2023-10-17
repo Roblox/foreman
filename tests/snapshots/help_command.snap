@@ -13,10 +13,11 @@ FLAGS:
     -v               Logging verbosity. Supply multiple for more verbosity, up to -vvv
 
 SUBCOMMANDS:
-    github-auth    Set the GitHub Personal Access Token that Foreman should use with the GitHub API
-    gitlab-auth    Set the GitLab Personal Access Token that Foreman should use with the GitLab API
-    help           Prints this message or the help of the given subcommand(s)
-    install        Install tools defined by foreman.toml
-    list           List installed tools
+    generate-artifactory-path    Create a path to publish to artifactory
+    github-auth                  Set the GitHub Personal Access Token that Foreman should use with the GitHub API
+    gitlab-auth                  Set the GitLab Personal Access Token that Foreman should use with the GitLab API
+    help                         Prints this message or the help of the given subcommand(s)
+    install                      Install tools defined by foreman.toml
+    list                         List installed tools
 
 
