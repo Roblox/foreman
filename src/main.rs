@@ -155,7 +155,7 @@ enum Subcommand {
 
     /// Create a path to publish to artifactory
     ///
-    /// Foreman does not support uploading the artifactory itself but will generate the path it expects to find artifacts.
+    /// Foreman does not support uploading binaries to artifactory directly, but it can generate the path where it would expect to find a given artifact. Use this command to generate paths that can be input to generic artifactory upload solutions.
     #[structopt(name = "generate-artifactory-path")]
     GenerateArtifactoryPath(GenerateArtifactoryPathCommand),
 }
