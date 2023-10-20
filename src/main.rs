@@ -1,5 +1,6 @@
 mod aliaser;
 mod artifact_choosing;
+mod artifactory_path;
 mod auth_store;
 mod ci_string;
 mod config;
@@ -151,6 +152,12 @@ enum Subcommand {
     /// This token can also be configured by editing ~/.foreman/auth.toml.
     #[structopt(name = "gitlab-auth")]
     GitLabAuth(GitLabAuthCommand),
+
+    /// Create a path to publish to artifactory
+    ///
+    /// Foreman does not support uploading binaries to artifactory directly, but it can generate the path where it would expect to find a given artifact. Use this command to generate paths that can be input to generic artifactory upload solutions.
+    #[structopt(name = "generate-artifactory-path")]
+    GenerateArtifactoryPath(GenerateArtifactoryPathCommand),
 }
 
 #[derive(Debug, StructOpt)]
@@ -167,6 +174,15 @@ struct GitLabAuthCommand {
     ///
     /// If not specified, Foreman will prompt for it.
     token: Option<String>,
+}
+
+#[derive(Debug, StructOpt)]
+struct GenerateArtifactoryPathCommand {
+    repo: String,
+    tool_name: String,
+    version: String,
+    operating_system: String,
+    architecture: Option<String>,
 }
 
 fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
@@ -270,6 +286,16 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             AuthStore::set_gitlab_token(&paths.auth_store(), &token)?;
 
             println!("GitLab auth saved successfully.");
+        }
+        Subcommand::GenerateArtifactoryPath(subcommand) => {
+            let artifactory_path = artifactory_path::generate_artifactory_path(
+                subcommand.repo,
+                subcommand.tool_name,
+                subcommand.version,
+                subcommand.operating_system,
+                subcommand.architecture,
+            )?;
+            println!("{}", artifactory_path);
         }
     }
 

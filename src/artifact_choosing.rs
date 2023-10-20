@@ -1,3 +1,5 @@
+//After updating this file, consider updating artifactory_path.rs to reflect the operating systems and architectures that Foreman recognizes
+
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
 static PLATFORM_KEYWORDS: &[&str] = &["win64", "windows-x86_64", "windows"];
 
