@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.4.0 (2023-10-24)
+- Added generate-artifactory-path command to foreman ([#84](https://github.com/Roblox/foreman/pull/84))
+
+## 1.3.0 (2023-10-10)
+- Modified path to follow symlinks for snapshots tests ([#76](https://github.com/Roblox/foreman/pull/76))
+- Split Up artiaa_auth Into Separate Library ([#77](https://github.com/Roblox/foreman/pull/77))
+- Manual deserialization of toml into toolspec struct by ([#79](https://github.com/Roblox/foreman/pull/79))
+- Added Artifactory tool source target support by ([#80](https://github.com/Roblox/foreman/pull/80))
+- Properly Kill Subprocesses With ctrl-c by ([#81](https://github.com/Roblox/foreman/pull/81))
+
 ## 1.2.0 (2023-08-02)
 - Take into account architecture when downloading binaries for Windows to fix incorrect download of windows-aarch64 assets on win64 hosts ([#71](https://github.com/Roblox/foreman/pull/71))
 - Support all Tier 1 Rust supported platforms {windows, linux, macos}-{x86_64, i686, aarch64} ([#71](https://github.com/Roblox/foreman/pull/71))
