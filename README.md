@@ -73,10 +73,10 @@ foreman supports Github and Gitlab as hosts by default, but you can define your 
 # source = {source = "https://github.com", protocol = "github"}
 # github = {source = "https://github.com", protocol = "github"}
 # gitlab = {source = "https://gitlab.com", protocol = "gitlab"}
-artifactory = {souce = "https://artifactory.com", protocol = "artifactory"}
+artifactory = {source = "https://artifactory.com", protocol = "artifactory"}
 
 [tools]
-rotrieve = {artifactory = "tools/rotriever", version = "0.5.12"}
+tool = {artifactory = "tools/tool", version = "1.1.0"}
 ```
 
 foreman currently only supports github, gitlab, and artifactory as protocols.
