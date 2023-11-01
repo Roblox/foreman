@@ -24,7 +24,7 @@ jobs:
           name: foreman-win64
           path: target/release/foreman.exe
 
-  macos:
+  macos-x86-64:
     runs-on: macos-latest
     timeout-minutes: 20
 
@@ -48,8 +48,17 @@ jobs:
           name: foreman-macos-x86_64
           path: target/x86_64-apple-darwin/release/foreman
 
-      - name: Cleanup finished x86_64 build
-        run: rm -rf ./target
+  macos-arm64:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup target install aarch64-apple-darwin
+          rustup target install x86_64-apple-darwin
 
       - name: Cache OpenSSL
         uses: actions/cache@v2
@@ -89,7 +98,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: ["windows", "macos", "linux"]
+    needs: ["windows", "macos-x86-64", "macos-arm64", "linux"]
     steps:
       - uses: actions/checkout@v1
       - name: Download artifacts
