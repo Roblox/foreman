@@ -3,54 +3,51 @@ name: CI
 on:
   push:
     branches:
-    - main
+      - main
 
   pull_request:
     branches:
-    - main
+      - main
 
 jobs:
   checks:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Setup Rust toolchain
-      shell: bash
-      run: rustup default stable
+      - name: Setup Rust toolchain
+        shell: bash
+        run: rustup default stable
 
-    - name: Rustfmt
-      shell: bash
-      run: cargo fmt -- --check
+      - name: Rustfmt
+        shell: bash
+        run: cargo fmt -- --check
 
-    - name: Clippy
-      shell: bash
-      run: cargo clippy
+      - name: Clippy
+        shell: bash
+        run: cargo clippy
 
   build:
     needs: checks
     timeout-minutes: 15
     strategy:
       matrix:
-         os: [windows-latest, ubuntu-latest]
-         rust_version: [stable, "1.66.0"]
+        os: [windows-latest, ubuntu-latest]
+        rust_version: [stable, "1.66.0"]
 
-    runs-on:  ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Setup Rust toolchain
-      shell: bash
-      run: rustup default ${{ matrix.rust_version }}
+      - name: Setup Rust toolchain
+        run: rustup default ${{ matrix.rust_version }}
 
-    - name: Build
-      shell: bash
-      run: cargo build --locked --verbose
+      - name: Build
+        run: cargo build --locked --verbose
 
-    - name: Run tests
-      shell: bash
-      run: cargo test --locked --verbose
+      - name: Run tests
+        run: cargo test --locked --verbose
 
   end-to-end-tests:
     strategy:
@@ -61,16 +58,16 @@ jobs:
     needs: build
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: End-to-end tests
-      shell: bash
-      run: |
-        cargo install --path .
-        foreman --version
-        PATH=$PATH:~/.foreman/bin
-        ./scripts/end-to-end-tests.sh
-  
+      - name: End-to-end tests
+        shell: bash
+        run: |
+          cargo install --path .
+          foreman --version
+          PATH=$PATH:~/.foreman/bin
+          ./scripts/end-to-end-tests.sh
+
   kill-process-test-unix:
     strategy:
       matrix:
@@ -79,16 +76,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: build
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: kill-process-test-unix
-      shell: bash
-      run: |
-        cargo install --path .
-        foreman --version
-        PATH=$PATH:~/.foreman/bin
-        ./scripts/kill-process-test-unix.sh
-          
+      - name: kill-process-test-unix
+        shell: bash
+        run: |
+          cargo install --path .
+          foreman --version
+          PATH=$PATH:~/.foreman/bin
+          ./scripts/kill-process-test-unix.sh
+
   kill-process-test-windows:
     strategy:
       matrix:
@@ -96,13 +93,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: build
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: kill-process-test-windows
-      shell: pwsh
-      run: |
-        cargo install --path .
-        foreman --version
-        $env:Path += '%USERPROFILE%/.foreman/bin' 
-        .\scripts\kill-process-test-windows.ps1
-
+      - name: kill-process-test-windows
+        shell: pwsh
+        run: |
+          cargo install --path .
+          foreman --version
+          $env:Path += '%USERPROFILE%/.foreman/bin' 
+          .\scripts\kill-process-test-windows.ps1
