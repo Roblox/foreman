@@ -30,7 +30,7 @@ jobs:
 
   build:
     needs: checks
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest]
