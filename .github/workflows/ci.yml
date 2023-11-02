@@ -70,11 +70,11 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: End-to-end tests windows
-        shell: pwsh
+        shell: cmd
         run: |
           cargo install --path .
           foreman --version
-          $env:Path += '%USERPROFILE%/.foreman/bin' 
+          set PATH=%PATH%;%USERPROFILE%/.foreman/bin
           bash .\scripts\end-to-end-tests.sh
 
   kill-process-test-unix:
