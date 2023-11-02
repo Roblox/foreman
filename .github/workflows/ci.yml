@@ -79,7 +79,7 @@ jobs:
         shell: bash
         run: |
           PATH=$PATH:~/.foreman/bin
-          ./scripts/kill-process-test-unix.sh
+          ./scripts/end-to-end-tests.sh
 
   kill-process-test-unix:
     runs-on: ubuntu-latest
