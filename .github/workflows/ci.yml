@@ -69,13 +69,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: End-to-end tests windows
+      - name: install foreman from source
         shell: pwsh
         run: |
           cargo install --path .
           foreman --version
-          $env:Path += '%USERPROFILE%/.foreman/bin' 
-          bash .\scripts\end-to-end-tests.sh
+
+      - name: End-to-end tests windows
+        shell: bash
+        run: |
+          PATH=$PATH:~/.foreman/bin
+          ./scripts/kill-process-test-unix.sh
 
   kill-process-test-unix:
     runs-on: ubuntu-latest
