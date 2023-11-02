@@ -75,7 +75,7 @@ jobs:
           cargo install --path .
           foreman --version
           $env:Path += '%USERPROFILE%/.foreman/bin' 
-          bash end-to-end-tests.sh
+          bash .\scripts\end-to-end-tests.sh
 
   kill-process-test-unix:
     runs-on: ubuntu-latest
