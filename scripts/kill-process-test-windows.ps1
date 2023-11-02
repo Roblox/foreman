@@ -16,7 +16,7 @@ function create_rojo_files() {
 
 function setup_rojo() {
     write_foreman_toml github rojo "rojo-rbx/rojo" "7.3.0"
-    cargo run --release -- install
+    foreman install
     create_rojo_files
 }
 
