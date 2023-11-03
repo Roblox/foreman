@@ -21,20 +21,20 @@ write_foreman_toml () {
 
 verify_github_tool () {
     write_foreman_toml github $1 $2 $3
-    cargo run --release -- install
+    foreman install
     verify_tool_version $1 $3
     rm foreman.toml
 
     # for compatibility, verify that `source` also works
     write_foreman_toml source $1 $2 $3
-    cargo run --release -- install
+    foreman install
     verify_tool_version $1 $3
     rm foreman.toml
 }
 
 verify_gitlab_tool () {
     write_foreman_toml gitlab $1 $2 $3
-    cargo run --release -- install
+    foreman install
     verify_tool_version $1 $3
     rm foreman.toml
 }
@@ -44,7 +44,7 @@ verify_install_all_before_fail () {
     echo "$1 = { github = \"$2\", version = \"=$3\" }" >> foreman.toml
     {
         # try
-        cargo run --release -- install
+        foreman install
     } || {
         # finally
         verify_tool_version $1 $3

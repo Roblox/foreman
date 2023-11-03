@@ -4,138 +4,158 @@ on:
   push:
     tags: ["*"]
 
+env:
+  OPENSSL_VER: openssl-1.1.1n
+
 jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Build release binary
-      run: cargo build --verbose --locked --release
+      - name: Build release binary
+        run: cargo build --verbose --locked --release
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: foreman-win64
-        path: target/release/foreman.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: foreman-win64
+          path: target/release/foreman.exe
 
-  macos:
+  macos-x86-64:
     runs-on: macos-latest
     timeout-minutes: 20
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Install Rust
-      run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        rustup target install aarch64-apple-darwin
-        rustup target install x86_64-apple-darwin
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup target install aarch64-apple-darwin
+          rustup target install x86_64-apple-darwin
 
-    - name: Build x86_64 release binary
-      run: |
-        source $HOME/.cargo/env
-        cargo build --verbose --locked --release --target x86_64-apple-darwin
+      - name: Build x86_64 release binary
+        run: |
+          source $HOME/.cargo/env
+          cargo build --verbose --locked --release --target x86_64-apple-darwin
 
-    - name: Upload Intel (x86_64) artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: foreman-macos-x86_64
-        path: target/x86_64-apple-darwin/release/foreman
+      - name: Upload Intel (x86_64) artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: foreman-macos-x86_64
+          path: target/x86_64-apple-darwin/release/foreman
 
-    - name: Cleanup finished x86_64 build
-      run: rm -rf ./target
+  macos-arm64:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v1
 
-    - name: Build arm64 release binary
-      run: |
-        source $HOME/.cargo/env
-        cargo build --verbose --locked --release --target aarch64-apple-darwin
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup target install aarch64-apple-darwin
+          rustup target install x86_64-apple-darwin
 
-    - name: Upload arm64 artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: foreman-macos-arm64
-        path: target/aarch64-apple-darwin/release/foreman
+      - name: Cache OpenSSL
+        uses: actions/cache@v2
+        with:
+          path: |
+            ${{ env.OPENSSL_VER }}-install
+          key: ${{ env.OPENSSL_VER }}-darwin-arm64-static
+
+      - name: Build arm64 release binary
+        run: |
+          source $HOME/.cargo/env
+          source .github/workflows/openssl.sh
+          cargo build --verbose --locked --release --target aarch64-apple-darwin
+
+      - name: Upload arm64 artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: foreman-macos-arm64
+          path: target/aarch64-apple-darwin/release/foreman
 
   linux:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
-    - uses: actions/checkout@v1
+      - uses: actions/checkout@v1
 
-    - name: Build
-      run: cargo build --locked --verbose --release
+      - name: Build
+        run: cargo build --locked --verbose --release
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v1
-      with:
-        name: foreman-linux
-        path: target/release/foreman
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: foreman-linux
+          path: target/release/foreman
 
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: ['windows', 'macos', 'linux']
+    needs: ["windows", "macos-x86-64", "macos-arm64", "linux"]
     steps:
-    - uses: actions/checkout@v1
-    - name: Download artifacts
-      uses: actions/download-artifact@v2
-      with:
-        path: artifacts
-    - run: |
-        zip -rj foreman-win64.zip ./artifacts/foreman-win64/*
-        zip -rj foreman-macos-x86_64.zip ./artifacts/foreman-macos-x86_64/*
-        zip -rj foreman-macos-arm64.zip ./artifacts/foreman-macos-arm64/*
-        zip -rj foreman-linux.zip ./artifacts/foreman-linux/*
-    - name: Create release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        draft: true
-        tag_name: ${{ github.ref }}
-        release_name: ${{ github.ref }}
+      - uses: actions/checkout@v1
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: artifacts
+      - run: |
+          zip -rj foreman-win64.zip ./artifacts/foreman-win64/*
+          zip -rj foreman-macos-x86_64.zip ./artifacts/foreman-macos-x86_64/*
+          zip -rj foreman-macos-arm64.zip ./artifacts/foreman-macos-arm64/*
+          zip -rj foreman-linux.zip ./artifacts/foreman-linux/*
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
 
-    - name: Upload windows build
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./foreman-win64.zip
-        asset_name: foreman-win64.zip
-        asset_content_type: application/zip
+      - name: Upload windows build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./foreman-win64.zip
+          asset_name: foreman-win64.zip
+          asset_content_type: application/zip
 
-    - name: Upload macos build
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./foreman-macos-x86_64.zip
-        asset_name: foreman-macos-x86_64.zip
-        asset_content_type: application/zip
+      - name: Upload macos build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./foreman-macos-x86_64.zip
+          asset_name: foreman-macos-x86_64.zip
+          asset_content_type: application/zip
 
-    - name: Upload macos build (arm64)
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./foreman-macos-arm64.zip
-        asset_name: foreman-macos-arm64.zip
-        asset_content_type: application/zip
+      - name: Upload macos build (arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./foreman-macos-arm64.zip
+          asset_name: foreman-macos-arm64.zip
+          asset_content_type: application/zip
 
-    - name: Upload linux build
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./foreman-linux.zip
-        asset_name: foreman-linux.zip
-        asset_content_type: application/zip
+      - name: Upload linux build
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./foreman-linux.zip
+          asset_name: foreman-linux.zip
+          asset_content_type: application/zip

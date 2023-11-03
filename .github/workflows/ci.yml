@@ -3,106 +3,108 @@ name: CI
 on:
   push:
     branches:
-    - main
+      - main
 
   pull_request:
     branches:
-    - main
+      - main
 
 jobs:
   checks:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Setup Rust toolchain
-      shell: bash
-      run: rustup default stable
+      - name: Setup Rust toolchain
+        shell: bash
+        run: rustup default stable
 
-    - name: Rustfmt
-      shell: bash
-      run: cargo fmt -- --check
+      - name: Rustfmt
+        shell: bash
+        run: cargo fmt -- --check
 
-    - name: Clippy
-      shell: bash
-      run: cargo clippy
+      - name: Clippy
+        shell: bash
+        run: cargo clippy
 
   build:
     needs: checks
-    timeout-minutes: 15
+    timeout-minutes: 20
     strategy:
       matrix:
-         os: [windows-latest, ubuntu-latest]
-         rust_version: [stable, "1.66.0"]
-
-    runs-on:  ${{ matrix.os }}
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Setup Rust toolchain
-      shell: bash
-      run: rustup default ${{ matrix.rust_version }}
-
-    - name: Build
-      shell: bash
-      run: cargo build --locked --verbose
-
-    - name: Run tests
-      shell: bash
-      run: cargo test --locked --verbose
-
-  end-to-end-tests:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [windows-latest, ubuntu-latest]
+        rust_version: [stable, "1.66.0"]
 
     runs-on: ${{ matrix.os }}
-    needs: build
-
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: End-to-end tests
-      shell: bash
-      run: |
-        cargo install --path .
-        foreman --version
-        PATH=$PATH:~/.foreman/bin
-        ./scripts/end-to-end-tests.sh
-  
+      - name: Setup Rust toolchain
+        run: rustup default ${{ matrix.rust_version }}
+
+      - name: Build
+        run: cargo build --locked --verbose
+
+      - name: Run tests
+        run: cargo test --locked --verbose
+
+  end-to-end-tests-ubuntu:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: End-to-end tests ubuntu
+        shell: bash
+        run: |
+          cargo install --path .
+          foreman --version
+          PATH=$PATH:~/.foreman/bin
+          ./scripts/end-to-end-tests.sh
+
+  end-to-end-tests-windows:
+    runs-on: windows-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install foreman from source
+        shell: pwsh
+        run: |
+          cargo install --path .
+          foreman --version
+
+      - name: End-to-end tests windows
+        shell: bash
+        run: |
+          PATH=$PATH:~/.foreman/bin
+          ./scripts/end-to-end-tests.sh
+
   kill-process-test-unix:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     needs: build
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: kill-process-test-unix
-      shell: bash
-      run: |
-        cargo install --path .
-        foreman --version
-        PATH=$PATH:~/.foreman/bin
-        ./scripts/kill-process-test-unix.sh
-          
+      - name: kill-process-test-unix
+        shell: bash
+        run: |
+          cargo install --path .
+          foreman --version
+          PATH=$PATH:~/.foreman/bin
+          ./scripts/kill-process-test-unix.sh
+
   kill-process-test-windows:
-    strategy:
-      matrix:
-        os: [windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     needs: build
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: kill-process-test-windows
-      shell: pwsh
-      run: |
-        cargo install --path .
-        foreman --version
-        $env:Path += '%USERPROFILE%/.foreman/bin' 
-        .\scripts\kill-process-test-windows.ps1
-
+      - name: kill-process-test-windows
+        shell: pwsh
+        run: |
+          cargo install --path .
+          foreman --version
+          $env:Path += '%USERPROFILE%/.foreman/bin' 
+          .\scripts\kill-process-test-windows.ps1
