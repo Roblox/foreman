@@ -36,9 +36,14 @@ To upgrade, re-run `cargo install foreman` and clean up the `bin` directory as d
 Most users will want to do a bit of additional setup to begin using tools via foreman.
 
 ### Path Configuration
-On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `~/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
+On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `$HOME/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
 
-It's recommended that you **add `~/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system. If you have tools installed via other mechanisms (for example, you may have previously installed `rojo` directly via `cargo`), ensure that `~/.foreman/bin` is on your PATH _before_ any other installation directories like `.cargo/bin` in order to make sure it takes precedence.
+It's recommended that you **add `$HOME/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system. If you have tools installed via other mechanisms (for example, you may have previously installed `rojo` directly via `cargo`), ensure that `$HOME/.foreman/bin` is on your PATH _before_ any other installation directories like `.cargo/bin` in order to make sure it takes precedence.
+
+If you're using bash or zsh, you can add this line to your `~/.bash_profile` or your `~/.zprofile` file (respectively):
+```
+export PATH=$HOME/.foreman/bin:$PATH
+```
 
 ### Authentication
 To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line).
