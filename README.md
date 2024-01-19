@@ -46,7 +46,7 @@ export PATH=$HOME/.foreman/bin:$PATH
 ```
 
 ### Authentication
-To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line).
+To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line). When creating the token in GitHub, make sure to grant access to the `repo` scope.
 
 Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
 
