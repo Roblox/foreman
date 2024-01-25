@@ -49,7 +49,7 @@ export PATH=$HOME/.foreman/bin:$PATH
 To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line). When creating the token in GitHub:
 
 1. Make sure to configure the token to have access to the `repo` scope
-2. Once created, you may need to click the `Configure SSO` button next to the token to auhtorize it for SSO usage. Whether or not you need to do this will depend on the GitHub org that you need to access.
+2. Once created, you may need to click the `Configure SSO` button next to the token to authorize it for SSO usage. Whether or not you need to do this will depend on the GitHub org that you need to access.
 
 Use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
 
