@@ -124,10 +124,6 @@ fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
 
 #[cfg(all(not(target_os = "macos"), target_family = "unix"))]
 fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
-    let xdg_data_home = env::var("XDG_DATA_HOME").map_err(|_| ForemanError::EnvVarNotFound {
-        env_var: "$XDG_DATA_HOME".to_string(),
-    })?;
-
     if let Ok(xdg_data_home) = env::var("XDG_DATA_HOME") {
         return Ok(PathBuf::from(format!(
             "{}/artiaa-tokens.json",
