@@ -1,4 +1,4 @@
-//! Slice of GitHub's API that Foreman consumes.
+//! Slice of Artifactory's API that Foreman consumes.
 
 use super::{Release, ReleaseAsset, ToolProviderImpl};
 use crate::{

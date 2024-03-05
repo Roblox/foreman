@@ -1,8 +1,9 @@
 ---
 source: tests/cli.rs
+assertion_line: 100
 expression: content
 ---
-foreman 1.5.0
+foreman 1.6.0
 
 USAGE:
     foreman [FLAGS] <SUBCOMMAND>
@@ -13,6 +14,7 @@ FLAGS:
     -v               Logging verbosity. Supply multiple for more verbosity, up to -vvv
 
 SUBCOMMANDS:
+    artifactory-auth             Set the Artifactory Token that Foreman should use with the Artifactory API
     generate-artifactory-path    Create a path to publish to artifactory
     github-auth                  Set the GitHub Personal Access Token that Foreman should use with the GitHub API
     gitlab-auth                  Set the GitLab Personal Access Token that Foreman should use with the GitLab API

@@ -1,5 +1,6 @@
 mod aliaser;
 mod artifact_choosing;
+mod artifactory_auth_store;
 mod artifactory_path;
 mod auth_store;
 mod ci_string;
@@ -11,8 +12,13 @@ mod process;
 mod tool_cache;
 mod tool_provider;
 
-use std::{env, ffi::OsStr};
+use std::{
+    env,
+    ffi::OsStr,
+    io::{stdout, Write},
+};
 
+use artifactory_auth_store::ArtifactoryAuthStore;
 use paths::ForemanPaths;
 use structopt::StructOpt;
 
@@ -153,6 +159,11 @@ enum Subcommand {
     #[structopt(name = "gitlab-auth")]
     GitLabAuth(GitLabAuthCommand),
 
+    /// Set the Artifactory Token that Foreman should use with the
+    /// Artifactory API.
+    #[structopt(name = "artifactory-auth")]
+    ArtifactoryAuth(ArtifactoryAuthCommand),
+
     /// Create a path to publish to artifactory
     ///
     /// Foreman does not support uploading binaries to artifactory directly, but it can generate the path where it would expect to find a given artifact. Use this command to generate paths that can be input to generic artifactory upload solutions.
@@ -173,6 +184,12 @@ struct GitLabAuthCommand {
     /// GitLab personal access token that Foreman should use.
     ///
     /// If not specified, Foreman will prompt for it.
+    token: Option<String>,
+}
+
+#[derive(Debug, StructOpt)]
+struct ArtifactoryAuthCommand {
+    url: Option<String>,
     token: Option<String>,
 }
 
@@ -297,9 +314,52 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             )?;
             println!("{}", artifactory_path);
         }
+        Subcommand::ArtifactoryAuth(subcommand) => {
+            let url = prompt_url(subcommand.url)?;
+
+            let token = prompt_auth_token(
+                subcommand.token,
+                "Artifactory",
+                "https://jfrog.com/help/r/jfrog-platform-administration-documentation/access-tokens",
+            )?;
+
+            ArtifactoryAuthStore::set_token(&paths.artiaa_path()?, &url, &token)?;
+        }
     }
 
     Ok(())
+}
+
+fn prompt_url(url: Option<String>) -> Result<String, ForemanError> {
+    match url {
+        Some(url) => Ok(url),
+        None => {
+            println!("Artifactory auth saved successfully.");
+            println!("Foreman requires a specific URL to authenticate to Artifactory.");
+            println!();
+
+            loop {
+                let mut input = String::new();
+
+                print!("Artifactory URL: ");
+                stdout().flush().map_err(|err| {
+                    ForemanError::io_error_with_context(
+                        err,
+                        "an error happened trying to flush stdout",
+                    )
+                })?;
+                std::io::stdin().read_line(&mut input).map_err(|err| {
+                    ForemanError::io_error_with_context(err, "an error happened trying to read url")
+                })?;
+
+                if input.is_empty() {
+                    println!("Token must be non-empty.");
+                } else {
+                    break Ok(input);
+                }
+            }
+        }
+    }
 }
 
 fn prompt_auth_token(
