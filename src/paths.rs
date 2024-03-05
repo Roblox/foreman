@@ -127,10 +127,22 @@ fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
     let xdg_data_home = env::var("XDG_DATA_HOME").map_err(|_| ForemanError::EnvVarNotFound {
         env_var: "$XDG_DATA_HOME".to_string(),
     })?;
-    Ok(PathBuf::from(format!(
-        "{}/ArtiAA/artiaa-tokens.json",
-        xdg_data_home
-    )))
+
+    if let Ok(xdg_data_home) = env::var("XDG_DATA_HOME") {
+        return Ok(PathBuf::from(format!(
+            "{}/artiaa-tokens.json",
+            xdg_data_home
+        )));
+    } else if let Ok(home) = env::var("HOME") {
+        return Ok(PathBuf::from(format!(
+            "{}/.local/share/artiaa-tokens.json",
+            home
+        )));
+    } else {
+        return Err(ForemanError::EnvVarNotFound {
+            env_var: "$HOME".to_string(),
+        });
+    }
 }
 
 #[cfg(other)]
