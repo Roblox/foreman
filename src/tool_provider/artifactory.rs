@@ -40,7 +40,7 @@ impl ToolProviderImpl for ArtifactoryProvider {
             .map_err(|error| ForemanError::ArtiAAError { error })?;
 
         if let Some(credentials) = tokens.get_credentials(host) {
-            builder = builder.header(AUTHORIZATION, format! {"Bearer {}", credentials.token});
+            builder = builder.header(AUTHORIZATION, format!("Bearer {}", credentials.token));
         }
         log::debug!("Downloading artifactory releases for {}", repo);
         let response_body = builder
