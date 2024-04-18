@@ -3,7 +3,7 @@ source: tests/cli.rs
 assertion_line: 100
 expression: content
 ---
-foreman 1.6.1
+foreman 1.6.2
 
 USAGE:
     foreman [FLAGS] <SUBCOMMAND>
