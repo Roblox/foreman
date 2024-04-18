@@ -14,8 +14,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use url::Url;
 
-const ARTIFACTORY_API_KEY_HEADER: &str = "X-JFrog-Art-Api";
-
 #[derive(Debug)]
 pub struct ArtifactoryProvider {
     paths: ForemanPaths,
@@ -42,7 +40,7 @@ impl ToolProviderImpl for ArtifactoryProvider {
             .map_err(|error| ForemanError::ArtiAAError { error })?;
 
         if let Some(credentials) = tokens.get_credentials(host) {
-            builder = builder.header(ARTIFACTORY_API_KEY_HEADER, credentials.token.to_string());
+            builder = builder.header(AUTHORIZATION, format!{"Bearer {}", credentials.token.to_string()});
         }
         log::debug!("Downloading artifactory releases for {}", repo);
         let response_body = builder
@@ -98,7 +96,7 @@ impl ToolProviderImpl for ArtifactoryProvider {
 
         let tokens = artiaa_auth::Tokens::load(&self.paths.artiaa_path()?).unwrap();
         if let Some(credentials) = tokens.get_credentials(&artifactory_url) {
-            builder = builder.header(AUTHORIZATION, format!("bearer {}", credentials.token));
+            builder = builder.header(AUTHORIZATION, format!("Bearer {}", credentials.token));
         }
 
         log::debug!("Downloading release asset {}", url);
