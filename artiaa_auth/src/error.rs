@@ -29,7 +29,7 @@ impl ArtifactoryAuthError {
     }
 }
 
-const ARTIFACTORY_AUTH_HELP: &str = include_str!("../../resources/artiaa-format.json");
+const ARTIFACTORY_AUTH_HELP: &str = include_str!("../resources/artiaa-format.json");
 
 impl fmt::Display for ArtifactoryAuthError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
