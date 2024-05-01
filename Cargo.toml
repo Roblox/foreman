@@ -6,7 +6,7 @@ default-members = [".", "artiaa_auth"]
 [package]
 name = "foreman"
 description = "Toolchain manager for simple binary tools"
-version = "1.6.1"
+version = "1.6.2"
 authors = [
     "Lucien Greathouse <me@lpghatguy.com>",
     "Matt Hargett <plaztiksyke@gmail.com>",
@@ -34,7 +34,7 @@ toml_edit = "0.14.4"
 urlencoding = "2.1.0"
 zip = "0.5"
 url = "2.4.1"
-artiaa_auth = { path = "./artiaa_auth" }
+artiaa_auth = { path = "./artiaa_auth", version = "1.0.0" }
 openssl = { version = "0.10.58", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]

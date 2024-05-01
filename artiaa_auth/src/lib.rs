@@ -55,7 +55,7 @@ mod test {
     use serde_json::Value;
     use tempfile::{tempdir, TempDir};
 
-    const SCHEMA: &str = include_str!("../../resources/artiaa-format.json");
+    const SCHEMA: &str = include_str!("../resources/artiaa-format.json");
 
     const EXAMPLE_FILE: &str = r#"{
         "tokens": {
