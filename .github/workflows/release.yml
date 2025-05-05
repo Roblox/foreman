@@ -19,7 +19,7 @@ jobs:
         run: cargo build --verbose --locked --release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-win64
           path: target/release/foreman.exe
@@ -43,7 +43,7 @@ jobs:
           cargo build --verbose --locked --release --target x86_64-apple-darwin
 
       - name: Upload Intel (x86_64) artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-macos-x86_64
           path: target/x86_64-apple-darwin/release/foreman
@@ -74,7 +74,7 @@ jobs:
           cargo build --verbose --locked --release --target aarch64-apple-darwin
 
       - name: Upload arm64 artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-macos-arm64
           path: target/aarch64-apple-darwin/release/foreman
@@ -90,7 +90,7 @@ jobs:
         run: cargo build --locked --verbose --release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-linux-x86_64
           path: target/release/foreman
@@ -109,7 +109,7 @@ jobs:
         run: cargo build --locked --verbose --release --target aarch64-unknown-linux-gnu
 
       - name: Upload arm64 artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-linux-arm64
           path: target/aarch64-unknown-linux-gnu/release/foreman
@@ -121,7 +121,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
       - run: |
