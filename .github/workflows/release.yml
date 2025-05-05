@@ -60,13 +60,6 @@ jobs:
           rustup target install aarch64-apple-darwin
           rustup target install x86_64-apple-darwin
 
-      - name: Cache OpenSSL
-        uses: actions/cache@v2
-        with:
-          path: |
-            ${{ env.OPENSSL_VER }}-install
-          key: ${{ env.OPENSSL_VER }}-darwin-arm64-static
-
       - name: Build arm64 release binary
         run: |
           source $HOME/.cargo/env
