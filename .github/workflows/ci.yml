@@ -108,19 +108,3 @@ jobs:
           foreman --version
           $env:Path += '%USERPROFILE%/.foreman/bin' 
           .\scripts\kill-process-test-windows.ps1
-
-  temp-test-linux-arm64:
-    runs-on: ubuntu-22.04-arm
-    timeout-minutes: 15
-
-    steps:
-      - uses: actions/checkout@v1
-
-      - name: Build arm64 release binary
-        run: cargo build --locked --verbose --release
-
-      - name: Upload arm64 artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: foreman-linux-arm64
-          path: target/release/foreman
