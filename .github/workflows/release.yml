@@ -19,7 +19,7 @@ jobs:
         run: cargo build --verbose --locked --release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-win64
           path: target/release/foreman.exe
@@ -43,7 +43,7 @@ jobs:
           cargo build --verbose --locked --release --target x86_64-apple-darwin
 
       - name: Upload Intel (x86_64) artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-macos-x86_64
           path: target/x86_64-apple-darwin/release/foreman
@@ -74,13 +74,13 @@ jobs:
           cargo build --verbose --locked --release --target aarch64-apple-darwin
 
       - name: Upload arm64 artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: foreman-macos-arm64
           path: target/aarch64-apple-darwin/release/foreman
 
-  linux:
-    runs-on: ubuntu-latest
+  linux-x86_64:
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
 
     steps:
@@ -90,26 +90,43 @@ jobs:
         run: cargo build --locked --verbose --release
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
-          name: foreman-linux
+          name: foreman-linux-x86_64
+          path: target/release/foreman
+
+  linux-arm64:
+    runs-on: ubuntu-22.04-arm
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Build arm64 release binary
+        run: cargo build --locked --verbose --release
+
+      - name: Upload arm64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: foreman-linux-arm64
           path: target/release/foreman
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
-    needs: ["windows", "macos-x86-64", "macos-arm64", "linux"]
+    needs: ["windows", "macos-x86-64", "macos-arm64", "linux-x86_64", "linux-arm64"]
     steps:
       - uses: actions/checkout@v1
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
       - run: |
           zip -rj foreman-win64.zip ./artifacts/foreman-win64/*
           zip -rj foreman-macos-x86_64.zip ./artifacts/foreman-macos-x86_64/*
           zip -rj foreman-macos-arm64.zip ./artifacts/foreman-macos-arm64/*
-          zip -rj foreman-linux.zip ./artifacts/foreman-linux/*
+          zip -rj foreman-linux-x86_64.zip ./artifacts/foreman-linux-x86_64/*
+          zip -rj foreman-linux-arm64.zip ./artifacts/foreman-linux-arm64/*
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -156,6 +173,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./foreman-linux.zip
-          asset_name: foreman-linux.zip
+          asset_path: ./foreman-linux-x86_64.zip
+          asset_name: foreman-linux-x86_64.zip
+          asset_content_type: application/zip
+
+      - name: Upload linux build (arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./foreman-linux-arm64.zip
+          asset_name: foreman-linux-arm64.zip
           asset_content_type: application/zip
