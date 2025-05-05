@@ -390,7 +390,7 @@ checksum = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 
 [[package]]
 name = "foreman"
-version = "1.6.5"
+version = "1.6.4"
 dependencies = [
  "artiaa_auth",
  "assert_cmd",
