@@ -80,7 +80,7 @@ jobs:
           path: target/aarch64-apple-darwin/release/foreman
 
   linux-x86_64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
 
     steps:
@@ -96,7 +96,7 @@ jobs:
           path: target/release/foreman
 
   linux-arm64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
 
     steps:
@@ -115,7 +115,7 @@ jobs:
           path: target/aarch64-unknown-linux-gnu/release/foreman
 
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     needs: ["windows", "macos-x86-64", "macos-arm64", "linux-x86_64", "linux-arm64"]
     steps:
