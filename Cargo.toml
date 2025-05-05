@@ -6,7 +6,7 @@ default-members = [".", "artiaa_auth"]
 [package]
 name = "foreman"
 description = "Toolchain manager for simple binary tools"
-version = "1.6.4"
+version = "1.6.5"
 authors = [
     "Lucien Greathouse <me@lpghatguy.com>",
     "Matt Hargett <plaztiksyke@gmail.com>",
