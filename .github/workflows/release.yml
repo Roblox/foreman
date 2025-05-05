@@ -79,7 +79,7 @@ jobs:
           name: foreman-macos-arm64
           path: target/aarch64-apple-darwin/release/foreman
 
-  linux:
+  linux-x86_64:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -92,13 +92,32 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v1
         with:
-          name: foreman-linux
+          name: foreman-linux-x86_64
           path: target/release/foreman
+
+  linux-arm64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Install Rust target for arm64
+        run: rustup target add aarch64-unknown-linux-gnu
+
+      - name: Build arm64 release binary
+        run: cargo build --locked --verbose --release --target aarch64-unknown-linux-gnu
+
+      - name: Upload arm64 artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: foreman-linux-arm64
+          path: target/aarch64-unknown-linux-gnu/release/foreman
 
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: ["windows", "macos-x86-64", "macos-arm64", "linux"]
+    needs: ["windows", "macos-x86-64", "macos-arm64", "linux-x86_64", "linux-arm64"]
     steps:
       - uses: actions/checkout@v1
       - name: Download artifacts
@@ -109,7 +128,8 @@ jobs:
           zip -rj foreman-win64.zip ./artifacts/foreman-win64/*
           zip -rj foreman-macos-x86_64.zip ./artifacts/foreman-macos-x86_64/*
           zip -rj foreman-macos-arm64.zip ./artifacts/foreman-macos-arm64/*
-          zip -rj foreman-linux.zip ./artifacts/foreman-linux/*
+          zip -rj foreman-linux-x86_64.zip ./artifacts/foreman-linux-x86_64/*
+          zip -rj foreman-linux-arm64.zip ./artifacts/foreman-linux-arm64/*
       - name: Create release
         id: create_release
         uses: actions/create-release@v1
@@ -156,6 +176,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./foreman-linux.zip
-          asset_name: foreman-linux.zip
+          asset_path: ./foreman-linux-x86_64.zip
+          asset_name: foreman-linux-x86_64.zip
+          asset_content_type: application/zip
+
+      - name: Upload linux build (arm64)
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./foreman-linux-arm64.zip
+          asset_name: foreman-linux-arm64.zip
           asset_content_type: application/zip
