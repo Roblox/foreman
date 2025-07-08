@@ -28,7 +28,15 @@ pub fn is_in_path<P: AsRef<Path>>(path: P) -> bool {
 }
 
 pub fn add_to_path<P: AsRef<Path>>(path: P) -> io::Result<()> {
-    _add_to_path(path.as_ref())
+    // Ensure directory exists before canonicalizing
+    std::fs::create_dir_all(&path)?;
+
+    let canon = path.as_ref()
+        .canonicalize()
+        .map_err(|e| io::Error::new(io::ErrorKind::Other,
+            format!("failed to canonicalize '{}': {}", path.as_ref().display(), e)))?;
+
+    _add_to_path(&canon)
 }
 
 #[cfg(target_os = "windows")]
