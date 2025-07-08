@@ -39,12 +39,14 @@ openssl = { version = "0.10.58", features = ["vendored"] }
 
 [target.'cfg(windows)'.dependencies]
 command-group = "1.0.8"
+winreg = "0.55.0"
+dunce = "1.0.5"
 
 [target.'cfg(unix)'.dependencies]
 tokio = { version = "1.18.2", features = ["macros", "sync", "process"] }
 signal-hook = "0.3.14"
 
-[dev_dependencies]
+[dev-dependencies]
 assert_cmd = "2.0.2"
 insta = "1.14"
 tempfile = "3.3.0"

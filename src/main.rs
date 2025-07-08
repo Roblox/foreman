@@ -27,7 +27,7 @@ use crate::{
     aliaser::add_self_alias,
     auth_store::AuthStore,
     config::ConfigFile,
-    env_var::{add_to_path, is_in_path},
+    env_var::add_to_path,
     error::{ForemanError, ForemanResult},
     tool_cache::ToolCache,
     tool_provider::ToolProvider,
@@ -293,19 +293,14 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             let bin_dir = paths.bin_dir();
             println!("Target binary directory: {}", bin_dir.display());
-
-            if is_in_path(&bin_dir) {
-                println!("The binary directory is already in your $PATH.");
-            } else {
-                match add_to_path(&bin_dir) {
-                    Ok(_) => {
-                        println!("Successfully added to your $PATH.");
-                        println!("You may need to restart your shell or source your profile for the change to take effect.");
-                    }
-                    Err(e) => {
-                        eprintln!("Failed to add to $PATH: {}", e);
-                        eprintln!("You may need to add it manually to your shell config (e.g. .bashrc, .zshrc, etc) or rerun with elevated permissions.");
-                    }
+            match add_to_path(&bin_dir) {
+                Ok(_) => {
+                    println!("Successfully added to your $PATH.");
+                    println!("You may need to restart your shell or source your profile for the change to take effect.");
+                }
+                Err(e) => {
+                    eprintln!("Failed to add to $PATH: {}", e);
+                    eprintln!("You may need to add it manually to your shell config (e.g. .bashrc, .zshrc, etc) or rerun with elevated permissions.");
                 }
             }
         }

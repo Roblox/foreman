@@ -6,49 +6,89 @@ use std::{
     process::Command,
 };
 
-pub fn is_in_path<P: AsRef<Path>>(path: P) -> bool {
-    let target = match path.as_ref().canonicalize() {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-
-    if let Some(paths) = env::var_os("PATH") {
-        for entry in env::split_paths(&paths) {
-            if entry.is_dir() {
-                if let Ok(canon) = entry.canonicalize() {
-                    if canon == target {
-                        return true;
-                    }
-                }
-            }
-        }
-    }
-
-    false
-}
-
 pub fn add_to_path<P: AsRef<Path>>(path: P) -> io::Result<()> {
     // Ensure directory exists before canonicalizing
     std::fs::create_dir_all(&path)?;
 
-    let canon = path.as_ref()
-        .canonicalize()
-        .map_err(|e| io::Error::new(io::ErrorKind::Other,
-            format!("failed to canonicalize '{}': {}", path.as_ref().display(), e)))?;
+    let canon = path.as_ref().canonicalize().map_err(|e| {
+        io::Error::new(
+            io::ErrorKind::Other,
+            format!(
+                "failed to canonicalize '{}': {}",
+                path.as_ref().display(),
+                e
+            ),
+        )
+    })?;
 
     _add_to_path(&canon)
 }
 
 #[cfg(target_os = "windows")]
 fn _add_to_path(dir: &Path) -> io::Result<()> {
-    // To modify for all users use `/M` and require admin
-    let dir_str = dir.display().to_string();
-    let value = format!("%PATH%;{}", dir_str);
-    Command::new("setx")
-        .args(&["PATH", &value])
-        .status()
-        .map(|_| ())
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+    use dunce;
+    use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE, REG_EXPAND_SZ};
+    use winreg::{RegKey, RegValue};
+
+    let dir_str = dunce::canonicalize(dir)?;
+    let dir_str = dir_str.display().to_string();
+
+    // Open handle to the Env variable
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    let environment = hkcu.open_subkey_with_flags("Environment", KEY_READ | KEY_WRITE)?;
+    let reg_value: RegValue = match environment.get_raw_value("Path") {
+        Ok(v) => v,
+        Err(e) if e.kind() == io::ErrorKind::NotFound => RegValue {
+            // Construct empty object if none exists
+            bytes: vec![],
+            vtype: REG_EXPAND_SZ,
+        },
+        Err(e) => return Err(e),
+    };
+
+    // Windows handles paths in UTF-16 so we must convert what we have to UTF-16 too.
+    let utf16_bytes = reg_value.bytes.chunks_exact(2);
+    let mut path_chars = Vec::new();
+    for chunk in utf16_bytes {
+        let code_point = u16::from_le_bytes([chunk[0], chunk[1]]);
+        if code_point == 0 {
+            break;
+        }
+        path_chars.push(code_point);
+    }
+
+    let mut current_path = String::from_utf16(&path_chars)
+        .map_err(|_| io::Error::new(io::ErrorKind::InvalidData, "Non-UTF16 data"))?
+        .trim_end_matches('\0') //Trim the null terminator
+        .to_string();
+
+    // Check if the path is already added in %PATH%
+    for path in env::split_paths(&current_path) {
+        if let Ok(path) = dunce::canonicalize(path) {
+            if path.display().to_string() == dir_str {
+                return Ok(());
+            }
+        }
+    }
+
+    // paths in %PATH% are seperated using `;`. This ensures proper formatting
+    if !current_path.is_empty() && !current_path.ends_with(';') {
+        current_path.push(';');
+    }
+    current_path.push_str(&dir_str);
+    
+
+    //Replace the old object with the new one
+    environment.set_raw_value(
+        "Path",
+        &RegValue {
+            bytes: current_path
+                .encode_utf16()
+                .flat_map(|c| c.to_le_bytes())
+                .collect(),
+            vtype: REG_EXPAND_SZ,
+        },
+    )
 }
 
 #[cfg(unix)]
