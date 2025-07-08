@@ -300,7 +300,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
                 }
                 Err(e) => {
                     eprintln!("Failed to add to $PATH: {}", e);
-                    eprintln!("You may need to add it manually to your shell config (e.g. .bashrc, .zshrc, etc) or rerun with elevated permissions.");
+                    eprintln!("You may need to add it manually to your config (e.g. .bashrc on Unix or %PATH% on Windows) or rerun with elevated permissions.");
                 }
             }
         }
