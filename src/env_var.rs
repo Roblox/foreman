@@ -9,17 +9,7 @@ use std::{
 pub fn add_to_path<P: AsRef<Path>>(path: P) -> io::Result<()> {
     // Ensure directory exists before canonicalizing
     std::fs::create_dir_all(&path)?;
-
-    let canon = path.as_ref().canonicalize().map_err(|e| {
-        io::Error::new(
-            io::ErrorKind::Other,
-            format!(
-                "failed to canonicalize '{}': {}",
-                path.as_ref().display(),
-                e
-            ),
-        )
-    })?;
+    
     let canon = path.as_ref().canonicalize().map_err(|e| {
         io::Error::new(
             io::ErrorKind::Other,
