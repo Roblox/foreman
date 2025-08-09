@@ -5,6 +5,7 @@ mod artifactory_path;
 mod auth_store;
 mod ci_string;
 mod config;
+mod env_var;
 mod error;
 mod fs;
 mod paths;
@@ -26,6 +27,7 @@ use crate::{
     aliaser::add_self_alias,
     auth_store::AuthStore,
     config::ConfigFile,
+    env_var::add_to_path,
     error::{ForemanError, ForemanResult},
     tool_cache::ToolCache,
     tool_provider::ToolProvider,
@@ -144,6 +146,9 @@ enum Subcommand {
 
     /// List installed tools.
     List,
+
+    /// Setup environtment variables
+    Setup,
 
     /// Set the GitHub Personal Access Token that Foreman should use with the
     /// GitHub API.
@@ -279,6 +284,23 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
                 for version in &tool.versions {
                     println!("    - {}", version);
+                }
+            }
+        }
+
+        Subcommand::Setup => {
+            println!("Installing to $PATH...");
+
+            let bin_dir = paths.bin_dir();
+            println!("Target binary directory: {}", bin_dir.display());
+            match add_to_path(&bin_dir) {
+                Ok(_) => {
+                    println!("Successfully added to your $PATH.");
+                    println!("You may need to restart your shell or source your profile for the change to take effect.");
+                }
+                Err(e) => {
+                    eprintln!("Failed to add to $PATH: {}", e);
+                    eprintln!("You may need to add it manually to your config (e.g. .bashrc on Unix or %PATH% on Windows) or rerun with elevated permissions.");
                 }
             }
         }

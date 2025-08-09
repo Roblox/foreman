@@ -21,5 +21,6 @@ SUBCOMMANDS:
     help                         Prints this message or the help of the given subcommand(s)
     install                      Install tools defined by foreman.toml
     list                         List installed tools
+    setup                        Setup environtment variables
 
 

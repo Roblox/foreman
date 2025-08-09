@@ -141,9 +141,9 @@ fn get_artiaa_path_based_on_os() -> ForemanResult<PathBuf> {
     }
 }
 
-#[cfg(other)]
+#[cfg(not(any(unix, windows)))]
 fn get_artiaa_path_based_on_os() -> PathBuf {
-    unimplemented!("artiaa_path is only defined for windows or unix operating systems")
+    unimplemented!("artiaa_path is only defined for Windows or Unix operating systems");
 }
 
 impl Default for ForemanPaths {
