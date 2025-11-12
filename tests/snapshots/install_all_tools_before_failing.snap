@@ -1,5 +1,6 @@
 ---
 source: tests/cli.rs
+assertion_line: 100
 expression: content
 ---
 [INFO ] Downloading github.com/Roblox/NotARepository@^0.1.0
@@ -15,7 +16,11 @@ expression: content
         Request from `https://api.github.com/repos/Roblox//releases`
         
         Received body:
-        {"message":"Not Found","documentation_url":"https://docs.github.com/rest","status":"404"}
+        {
+          "message": "Not Found",
+          "documentation_url": "https://docs.github.com/rest",
+          "status": "404"
+        }
 [INFO ] Downloading github.com/Roblox/VeryFakeRepository@^0.1.0
 [ERROR] The following error occurred while trying to download tool "not-a-real-tool":
         unexpected response body: invalid type: map, expected a sequence at line 1 column 0
