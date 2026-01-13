@@ -54,8 +54,10 @@ impl ToolProviderImpl for GithubProvider {
         let auth_store = AuthStore::load(&self.paths.auth_store())?;
 
         let mut all_releases: Vec<GithubRelease> = Vec::new();
-        let mut next_url: Option<String> =
-            Some(format!("https://api.github.com/repos/{}/releases?per_page=100", repo));
+        let mut next_url: Option<String> = Some(format!(
+            "https://api.github.com/repos/{}/releases?per_page=100",
+            repo
+        ));
 
         while let Some(url) = next_url.take() {
             let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
