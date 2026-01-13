@@ -1,19 +1,18 @@
 ---
 source: tests/cli.rs
-assertion_line: 100
 expression: content
 ---
 [INFO ] Downloading github.com/Roblox/NotARepository@^0.1.0
 [ERROR] The following error occurred while trying to download tool "also-not-a-real-tool":
         unexpected response body: invalid type: map, expected a sequence at line 1 column 0
-        Request from `https://api.github.com/repos/Roblox/NotARepository/releases`
+        Request from `https://api.github.com/repos/Roblox/NotARepository/releases?per_page=100`
         
         Received body:
         {"message":"Not Found","documentation_url":"https://docs.github.com/rest/releases/releases#list-releases","status":"404"}
 [INFO ] Downloading github.com/Roblox/@^0.2.0
 [ERROR] The following error occurred while trying to download tool "badly-formatted-tool":
         unexpected response body: invalid type: map, expected a sequence at line 1 column 0
-        Request from `https://api.github.com/repos/Roblox//releases`
+        Request from `https://api.github.com/repos/Roblox//releases?per_page=100`
         
         Received body:
         {
@@ -24,7 +23,7 @@ expression: content
 [INFO ] Downloading github.com/Roblox/VeryFakeRepository@^0.1.0
 [ERROR] The following error occurred while trying to download tool "not-a-real-tool":
         unexpected response body: invalid type: map, expected a sequence at line 1 column 0
-        Request from `https://api.github.com/repos/Roblox/VeryFakeRepository/releases`
+        Request from `https://api.github.com/repos/Roblox/VeryFakeRepository/releases?per_page=100`
         
         Received body:
         {"message":"Not Found","documentation_url":"https://docs.github.com/rest/releases/releases#list-releases","status":"404"}

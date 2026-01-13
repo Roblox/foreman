@@ -1,9 +1,8 @@
 ---
 source: tests/cli.rs
-assertion_line: 100
 expression: content
 ---
-foreman 1.6.4
+foreman 1.6.5
 
 USAGE:
     foreman [FLAGS] <SUBCOMMAND>
