@@ -146,3 +146,46 @@ impl From<GithubAsset> for ReleaseAsset {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_next_link_with_next_and_last() {
+        let header = r#"<https://api.github.com/repos/owner/repo/releases?per_page=100&page=2>; rel="next", <https://api.github.com/repos/owner/repo/releases?per_page=100&page=5>; rel="last""#;
+        assert_eq!(
+            parse_next_link(header),
+            Some("https://api.github.com/repos/owner/repo/releases?per_page=100&page=2".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_next_link_with_all_rels() {
+        let header = r#"<https://api.github.com/repos/owner/repo/releases?per_page=100&page=1>; rel="prev", <https://api.github.com/repos/owner/repo/releases?per_page=100&page=3>; rel="next", <https://api.github.com/repos/owner/repo/releases?per_page=100&page=5>; rel="last", <https://api.github.com/repos/owner/repo/releases?per_page=100&page=1>; rel="first""#;
+        assert_eq!(
+            parse_next_link(header),
+            Some("https://api.github.com/repos/owner/repo/releases?per_page=100&page=3".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_next_link_last_page_no_next() {
+        let header = r#"<https://api.github.com/repos/owner/repo/releases?per_page=100&page=4>; rel="prev", <https://api.github.com/repos/owner/repo/releases?per_page=100&page=1>; rel="first""#;
+        assert_eq!(parse_next_link(header), None);
+    }
+
+    #[test]
+    fn parse_next_link_empty_header() {
+        assert_eq!(parse_next_link(""), None);
+    }
+
+    #[test]
+    fn parse_next_link_only_next() {
+        let header = r#"<https://api.github.com/repos/owner/repo/releases?per_page=100&page=2>; rel="next""#;
+        assert_eq!(
+            parse_next_link(header),
+            Some("https://api.github.com/repos/owner/repo/releases?per_page=100&page=2".to_string())
+        );
+    }
+}
