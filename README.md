@@ -36,7 +36,7 @@ To upgrade, re-run `cargo install foreman` and clean up the `bin` directory as d
 Most users will want to do a bit of additional setup to begin using tools via foreman.
 
 ### Path Configuration
-On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `$HOME/.foreman` on Unix systems, `%USERPROFILE%/.foreman` on Windows).
+On first run (try `foreman list`), Foreman will create a `.foreman` directory in your user folder (usually `$HOME/.foreman` on Unix systems, `%USERPROFILE%\.foreman` on Windows).
 
 It's recommended that you **add `$HOME/.foreman/bin` to your `PATH`** to make the tools that Foreman installs for you accessible on your system. If you have tools installed via other mechanisms (for example, you may have previously installed `rojo` directly via `cargo`), ensure that `$HOME/.foreman/bin` is on your PATH _before_ any other installation directories like `.cargo/bin` in order to make sure it takes precedence.
 
@@ -48,7 +48,7 @@ export PATH=$HOME/.foreman/bin:$PATH
 ### Authentication
 To install tools from a private GitHub repository, Foreman supports authenticating with a [Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line). When creating the token in GitHub:
 
-1. Make sure to create a `Tokens (classic)` Personal Access Token. Fine-grained tokens may not work properly.
+1. Make sure to create a `Tokens (classic)` Personal Access Token. Fine-grained tokens may not work properly. Make sure to use your github.com profile and *not* your enterprise profile at github.rbx.com, otherwise the 3rd step below (Configure SSO) will not be available.
 2. Make sure to configure the token to have access to the `repo` scope.
 3. Once created, you may need to click the `Configure SSO` button next to the token to authorize it for SSO usage. Whether or not you need to do this will depend on the GitHub org that you need to access.
 
