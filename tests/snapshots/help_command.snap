@@ -2,7 +2,7 @@
 source: tests/cli.rs
 expression: content
 ---
-foreman 1.6.5
+foreman 1.7.0
 
 USAGE:
     foreman [FLAGS] <SUBCOMMAND>
@@ -14,11 +14,11 @@ FLAGS:
 
 SUBCOMMANDS:
     artifactory-auth             Set the Artifactory Token that Foreman should use with the Artifactory API
+    auth-secure                  Manage tokens in the OS credential manager (macOS Keychain, Windows Credential
+                                 Manager)
     generate-artifactory-path    Create a path to publish to artifactory
     github-auth                  Set the GitHub Personal Access Token that Foreman should use with the GitHub API
     gitlab-auth                  Set the GitLab Personal Access Token that Foreman should use with the GitLab API
     help                         Prints this message or the help of the given subcommand(s)
     install                      Install tools defined by foreman.toml
     list                         List installed tools
-
-
