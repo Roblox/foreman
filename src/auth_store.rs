@@ -40,11 +40,9 @@ fn create_platform_store() -> Result<Arc<CredentialStore>, String> {
     Ok(store)
 }
 
-#[cfg(all(not(target_os = "macos"), target_family = "unix"))]
+#[cfg(all(not(target_os = "macos"), not(windows)))]
 fn create_platform_store() -> Result<Arc<CredentialStore>, String> {
-    let store: Arc<CredentialStore> =
-        dbus_secret_service_keyring_store::Store::new().map_err(|e| e.to_string())?;
-    Ok(store)
+    Err("OS credential store not supported on this platform".to_string())
 }
 
 /// Contains stored user tokens that Foreman can use to download tools.
