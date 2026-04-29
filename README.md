@@ -52,7 +52,7 @@ To install tools from a private GitHub repository, Foreman supports authenticati
 2. Make sure to configure the token to have access to the `repo` scope.
 3. Once created, you may need to click the `Configure SSO` button next to the token to authorize it for SSO usage. Whether or not you need to do this will depend on the GitHub org that you need to access.
 
-Use `foreman auth-secure github` to pass an authentication token to Foreman using your systems platform-specific secure store.
+Use `foreman auth-secure add github` to pass an authentication token to Foreman using your systems platform-specific secure store.
 
 Alternatively, use `foreman github-auth` to pass an authentication token to Foreman, or open `~/.foreman/auth.toml` and follow the contained instructions.
 
