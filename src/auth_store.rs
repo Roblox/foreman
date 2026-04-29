@@ -57,47 +57,47 @@ fn create_platform_store() -> Result<Arc<CredentialStore>, String> {
 }
 
 /// Contains stored user tokens that Foreman can use to download tools.
+///
+/// Tokens from auth.toml are loaded eagerly. Keyring tokens are resolved
+/// lazily via the `github()` and `gitlab()` accessors to avoid unnecessary
+/// OS keychain prompts.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AuthStore {
-    pub github: Option<String>,
-    pub gitlab: Option<String>,
+    github: Option<String>,
+    gitlab: Option<String>,
 }
 
 impl AuthStore {
     pub fn load(path: &Path) -> ForemanResult<Self> {
-        let github = Self::resolve_token("github", path)?;
-        let gitlab = Self::resolve_token("gitlab", path)?;
-
-        if github.is_none() && gitlab.is_none() {
-            log::debug!("Found no credentials");
+        if let Some(contents) = fs::try_read(path)? {
+            let store: AuthStore = toml::from_slice(&contents)
+                .map_err(|error| ForemanError::auth_parsing(path, error.to_string()))?;
+            Ok(store)
+        } else {
+            Ok(AuthStore::default())
         }
-
-        Ok(Self { github, gitlab })
     }
 
-    fn resolve_token(key: &str, auth_file: &Path) -> ForemanResult<Option<String>> {
-        if let Some(token) = get_token_from_keyring(key) {
-            log::debug!("Found {} credentials from OS keyring", key);
-            return Ok(Some(token));
+    pub fn github(&self) -> Option<String> {
+        if let Some(token) = get_token_from_keyring("github") {
+            log::debug!("Found GitHub credentials from OS keyring");
+            return Some(token);
         }
-
-        if let Some(contents) = fs::try_read(auth_file)? {
-            let file_store: AuthStore = toml::from_slice(&contents)
-                .map_err(|error| ForemanError::auth_parsing(auth_file, error.to_string()))?;
-
-            let token = match key {
-                "github" => file_store.github,
-                "gitlab" => file_store.gitlab,
-                _ => None,
-            };
-
-            if token.is_some() {
-                log::debug!("Found {} credentials from auth.toml", key);
-            }
-            return Ok(token);
+        if self.github.is_some() {
+            log::debug!("Found GitHub credentials from auth.toml");
         }
+        self.github.clone()
+    }
 
-        Ok(None)
+    pub fn gitlab(&self) -> Option<String> {
+        if let Some(token) = get_token_from_keyring("gitlab") {
+            log::debug!("Found GitLab credentials from OS keyring");
+            return Some(token);
+        }
+        if self.gitlab.is_some() {
+            log::debug!("Found GitLab credentials from auth.toml");
+        }
+        self.gitlab.clone()
     }
 
     pub fn set_github_token(auth_file: &Path, token: &str) -> ForemanResult<()> {
