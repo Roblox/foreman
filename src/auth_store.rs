@@ -26,6 +26,17 @@ fn ensure_credential_store() {
     });
 }
 
+fn require_credential_store() -> ForemanResult<()> {
+    ensure_credential_store();
+    if keyring_core::get_default_store().is_none() {
+        return Err(ForemanError::keyring_error(
+            "OS credential store is not supported on this platform. \
+             Use `foreman github-auth` or `foreman gitlab-auth` to store tokens in auth.toml instead.",
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(target_os = "macos")]
 fn create_platform_store() -> Result<Arc<CredentialStore>, String> {
     let store: Arc<CredentialStore> =
@@ -111,14 +122,17 @@ impl AuthStore {
     }
 
     pub fn set_token_secure(provider: &str, token: &str) -> ForemanResult<()> {
+        require_credential_store()?;
         set_token_in_keyring(provider, token)
     }
 
     pub fn delete_token_secure(provider: &str) -> ForemanResult<()> {
+        require_credential_store()?;
         delete_token_from_keyring(provider)
     }
 
     pub fn delete_all_tokens_secure() -> ForemanResult<()> {
+        require_credential_store()?;
         let mut errors = Vec::new();
         if let Err(e) = delete_token_from_keyring("github") {
             errors.push(format!("github: {}", e));
@@ -134,6 +148,7 @@ impl AuthStore {
     }
 
     pub fn migrate_to_keyring(auth_file: &Path) -> ForemanResult<(bool, bool)> {
+        require_credential_store()?;
         let contents = match fs::try_read(auth_file)? {
             Some(c) => c,
             None => return Ok((false, false)),
