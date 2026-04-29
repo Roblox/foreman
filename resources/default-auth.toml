@@ -15,5 +15,8 @@
 # You can also run `foreman github-auth` to update this file, optionally passing
 # the token as the first argument.
 
+# You can also run `foreman auth-secure <provider> <token>` to store the token in 
+# the system keyring instead of this file
+
 # In order to use sources from private repositories, this token will need "repo"
 # permissions granted to it and potentially SSO authorization.

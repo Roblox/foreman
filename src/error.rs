@@ -77,6 +77,9 @@ pub enum ForemanError {
     ArtiAAError {
         error: ArtifactoryAuthError,
     },
+    KeyringError {
+        message: String,
+    },
 }
 
 #[derive(Debug, PartialEq)]
@@ -177,6 +180,12 @@ impl ForemanError {
         Self::NoCompatibleVersionFound {
             tool: tool.clone(),
             available_versions,
+        }
+    }
+
+    pub fn keyring_error<S: Into<String>>(message: S) -> Self {
+        Self::KeyringError {
+            message: message.into(),
         }
     }
 
@@ -327,6 +336,9 @@ impl fmt::Display for ForemanError {
             }
             Self::ArtiAAError { error } => {
                 write!(f, "{}", error)
+            }
+            Self::KeyringError { message } => {
+                write!(f, "keyring error: {}", message)
             }
         }
     }
