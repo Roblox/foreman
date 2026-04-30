@@ -355,7 +355,7 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
             AuthSecureAction::Add(cmd) => {
                 let (provider, help) = parse_provider(&cmd.provider)?;
                 let token = prompt_auth_token(cmd.token, provider, help)?;
-                AuthStore::set_token_secure(&cmd.provider.to_lowercase(), &token)?;
+                AuthStore::set_token_secure(&paths.auth_store(), &cmd.provider.to_lowercase(), &token)?;
                 println!("{} auth saved to OS credential manager.", provider);
             }
             AuthSecureAction::Remove(cmd) => {

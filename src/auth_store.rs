@@ -58,13 +58,15 @@ fn create_platform_store() -> Result<Arc<CredentialStore>, String> {
 
 /// Contains stored user tokens that Foreman can use to download tools.
 ///
-/// Tokens from auth.toml are loaded eagerly. Keyring tokens are resolved
-/// lazily via the `github()` and `gitlab()` accessors to avoid unnecessary
-/// OS keychain prompts.
+/// When `secure` is true in auth.toml, tokens are resolved from the OS
+/// keyring. Otherwise only auth.toml is checked, so users who haven't
+/// opted in never get keychain prompts.
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct AuthStore {
     github: Option<String>,
     gitlab: Option<String>,
+    #[serde(default)]
+    secure: bool,
 }
 
 impl AuthStore {
@@ -79,9 +81,11 @@ impl AuthStore {
     }
 
     pub fn github(&self) -> Option<String> {
-        if let Some(token) = get_token_from_keyring("github") {
-            log::debug!("Found GitHub credentials from OS keyring");
-            return Some(token);
+        if self.secure {
+            if let Some(token) = get_token_from_keyring("github") {
+                log::debug!("Found GitHub credentials from OS keyring");
+                return Some(token);
+            }
         }
         if self.github.is_some() {
             log::debug!("Found GitHub credentials from auth.toml");
@@ -90,9 +94,11 @@ impl AuthStore {
     }
 
     pub fn gitlab(&self) -> Option<String> {
-        if let Some(token) = get_token_from_keyring("gitlab") {
-            log::debug!("Found GitLab credentials from OS keyring");
-            return Some(token);
+        if self.secure {
+            if let Some(token) = get_token_from_keyring("gitlab") {
+                log::debug!("Found GitLab credentials from OS keyring");
+                return Some(token);
+            }
         }
         if self.gitlab.is_some() {
             log::debug!("Found GitLab credentials from auth.toml");
@@ -121,9 +127,22 @@ impl AuthStore {
         fs::write(auth_file, serialized)
     }
 
-    pub fn set_token_secure(provider: &str, token: &str) -> ForemanResult<()> {
+    fn set_secure_flag(auth_file: &Path, enabled: bool) -> ForemanResult<()> {
+        let contents =
+            fs::try_read_to_string(auth_file)?.unwrap_or_else(|| DEFAULT_AUTH_CONFIG.to_owned());
+
+        let mut store: Document = contents
+            .parse()
+            .map_err(|err: TomlError| ForemanError::auth_parsing(auth_file, err.to_string()))?;
+        store["secure"] = value(enabled);
+
+        fs::write(auth_file, store.to_string())
+    }
+
+    pub fn set_token_secure(auth_file: &Path, provider: &str, token: &str) -> ForemanResult<()> {
         require_credential_store()?;
-        set_token_in_keyring(provider, token)
+        set_token_in_keyring(provider, token)?;
+        Self::set_secure_flag(auth_file, true)
     }
 
     pub fn delete_token_secure(provider: &str) -> ForemanResult<()> {
@@ -172,6 +191,7 @@ impl AuthStore {
 
         if github_migrated || gitlab_migrated {
             Self::clear_migrated_tokens(auth_file, github_migrated, gitlab_migrated)?;
+            Self::set_secure_flag(auth_file, true)?;
         }
 
         Ok((github_migrated, gitlab_migrated))
