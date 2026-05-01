@@ -36,7 +36,7 @@ impl ToolProviderImpl for GitlabProvider {
         let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
 
         let auth_store = AuthStore::load(&self.paths.auth_store())?;
-        if let Some(token) = &auth_store.gitlab {
+        if let Some(token) = &auth_store.gitlab() {
             builder = builder.header("PRIVATE-TOKEN", token);
         }
 
@@ -65,7 +65,7 @@ impl ToolProviderImpl for GitlabProvider {
             .header(ACCEPT, "application/octet-stream");
 
         let auth_store = AuthStore::load(&self.paths.auth_store())?;
-        if let Some(token) = &auth_store.gitlab {
+        if let Some(token) = &auth_store.gitlab() {
             builder = builder.header("PRIVATE-TOKEN", token);
         }
 

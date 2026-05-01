@@ -6,7 +6,7 @@ default-members = [".", "artiaa_auth"]
 [package]
 name = "foreman"
 description = "Toolchain manager for simple binary tools"
-version = "1.6.5"
+version = "1.7.0"
 authors = [
     "Lucien Greathouse <me@lpghatguy.com>",
     "Matt Hargett <plaztiksyke@gmail.com>",
@@ -35,14 +35,20 @@ urlencoding = "2.1.0"
 zip = "0.5"
 url = "2.4.1"
 artiaa_auth = { path = "./artiaa_auth", version = "1.0.0" }
+keyring-core = "1.0.0"
 openssl = { version = "0.10.58", features = ["vendored"] }
-
-[target.'cfg(windows)'.dependencies]
-command-group = "1.0.8"
 
 [target.'cfg(unix)'.dependencies]
 tokio = { version = "1.18.2", features = ["macros", "sync", "process"] }
 signal-hook = "0.3.14"
+
+[target.'cfg(windows)'.dependencies]
+command-group = "1.0.8"
+windows-native-keyring-store = "1.0.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+apple-native-keyring-store = { version = "1.0.0", features = ["keychain"] }
+
 
 [dev_dependencies]
 assert_cmd = "2.0.2"

@@ -62,7 +62,7 @@ impl ToolProviderImpl for GithubProvider {
         while let Some(url) = next_url.take() {
             let mut builder = client.get(&url).header(USER_AGENT, "Roblox/foreman");
 
-            if let Some(token) = &auth_store.github {
+            if let Some(token) = &auth_store.github() {
                 builder = builder.header(AUTHORIZATION, format!("token {}", token));
             }
 
@@ -100,7 +100,7 @@ impl ToolProviderImpl for GithubProvider {
             .header(ACCEPT, "application/octet-stream");
 
         let auth_store = AuthStore::load(&self.paths.auth_store())?;
-        if let Some(token) = &auth_store.github {
+        if let Some(token) = &auth_store.github() {
             builder = builder.header(AUTHORIZATION, format!("token {}", token));
         }
 

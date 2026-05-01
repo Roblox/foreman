@@ -164,6 +164,11 @@ enum Subcommand {
     #[structopt(name = "artifactory-auth")]
     ArtifactoryAuth(ArtifactoryAuthCommand),
 
+    /// Manage tokens in the OS credential manager
+    /// (macOS Keychain, Windows Credential Manager).
+    #[structopt(name = "auth-secure")]
+    AuthSecure(AuthSecureCommand),
+
     /// Create a path to publish to artifactory
     ///
     /// Foreman does not support uploading binaries to artifactory directly, but it can generate the path where it would expect to find a given artifact. Use this command to generate paths that can be input to generic artifactory upload solutions.
@@ -185,6 +190,48 @@ struct GitLabAuthCommand {
     ///
     /// If not specified, Foreman will prompt for it.
     token: Option<String>,
+}
+
+#[derive(Debug, StructOpt)]
+struct AuthSecureCommand {
+    #[structopt(subcommand)]
+    action: AuthSecureAction,
+}
+
+#[derive(Debug, StructOpt)]
+enum AuthSecureAction {
+    /// Store a token in the OS credential manager.
+    ///
+    /// Usage: foreman auth-secure add <github|gitlab> [token]
+    Add(AuthSecureAddCommand),
+
+    /// Remove a token from the OS credential manager.
+    ///
+    /// Usage: foreman auth-secure remove <github|gitlab>
+    ///        foreman auth-secure remove --all
+    Remove(AuthSecureRemoveCommand),
+
+    /// Migrate tokens from auth.toml to the OS credential manager.
+    Migrate,
+}
+
+#[derive(Debug, StructOpt)]
+struct AuthSecureAddCommand {
+    /// The provider: "github" or "gitlab".
+    provider: String,
+
+    /// Personal access token. If not specified, Foreman will prompt for it.
+    token: Option<String>,
+}
+
+#[derive(Debug, StructOpt)]
+struct AuthSecureRemoveCommand {
+    /// The provider: "github" or "gitlab". Not required if --all is set.
+    provider: Option<String>,
+
+    /// Remove tokens for all providers.
+    #[structopt(long)]
+    all: bool,
 }
 
 #[derive(Debug, StructOpt)]
@@ -304,6 +351,47 @@ fn actual_main(paths: ForemanPaths) -> ForemanResult<()> {
 
             println!("GitLab auth saved successfully.");
         }
+        Subcommand::AuthSecure(subcommand) => match subcommand.action {
+            AuthSecureAction::Add(cmd) => {
+                let (provider, help) = parse_provider(&cmd.provider)?;
+                let token = prompt_auth_token(cmd.token, provider, help)?;
+                AuthStore::set_token_secure(
+                    &paths.auth_store(),
+                    &cmd.provider.to_lowercase(),
+                    &token,
+                )?;
+                println!("{} auth saved to OS credential manager.", provider);
+            }
+            AuthSecureAction::Remove(cmd) => {
+                if cmd.all {
+                    AuthStore::delete_all_tokens_secure()?;
+                    println!("All tokens removed from OS credential manager.");
+                } else if let Some(provider_str) = &cmd.provider {
+                    let (provider, _) = parse_provider(provider_str)?;
+                    AuthStore::delete_token_secure(&provider_str.to_lowercase())?;
+                    println!("{} token removed from OS credential manager.", provider);
+                } else {
+                    return Err(ForemanError::io_error_with_context(
+                        std::io::Error::new(std::io::ErrorKind::InvalidInput, ""),
+                        "specify a provider (github or gitlab) or use --all",
+                    ));
+                }
+            }
+            AuthSecureAction::Migrate => {
+                let (github, gitlab) = AuthStore::migrate_to_keyring(&paths.auth_store())?;
+                if !github && !gitlab {
+                    println!("No tokens found in auth.toml to migrate.");
+                } else {
+                    if github {
+                        println!("Migrated GitHub token to OS credential manager.");
+                    }
+                    if gitlab {
+                        println!("Migrated GitLab token to OS credential manager.");
+                    }
+                    println!("Tokens removed from auth.toml.");
+                }
+            }
+        },
         Subcommand::GenerateArtifactoryPath(subcommand) => {
             let artifactory_path = artifactory_path::generate_artifactory_path(
                 subcommand.repo,
@@ -359,6 +447,23 @@ fn prompt_url(url: Option<String>) -> Result<String, ForemanError> {
                 }
             }
         }
+    }
+}
+
+fn parse_provider(provider: &str) -> Result<(&str, &str), ForemanError> {
+    match provider.to_lowercase().as_str() {
+        "github" => Ok((
+            "GitHub",
+            "https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line",
+        )),
+        "gitlab" => Ok((
+            "GitLab",
+            "https://docs.gitlab.com/ee/user/profile/personal_access_tokens.html",
+        )),
+        other => Err(ForemanError::io_error_with_context(
+            std::io::Error::new(std::io::ErrorKind::InvalidInput, ""),
+            format!("unknown provider '{}'. Expected 'github' or 'gitlab'", other),
+        )),
     }
 }
 
