@@ -7,7 +7,7 @@ use crate::{
 };
 use semver::VersionReq;
 use std::{
-    collections::{BTreeMap, HashMap},
+    collections::{btree_map, BTreeMap, HashMap},
     env, fmt,
 };
 use toml::Value;
@@ -275,7 +275,22 @@ impl ConfigFile {
 
     fn fill_from(&mut self, other: ConfigFile) {
         for (tool_name, tool_source) in other.tools {
-            self.tools.entry(tool_name).or_insert(tool_source);
+            match self.tools.entry(tool_name) {
+                btree_map::Entry::Occupied(entry) => {
+                    if *entry.get() != tool_source {
+                        log::warn!(
+                            "tool `{}` is defined in multiple configuration files; \
+                             using `{}` (ignoring `{}`)",
+                            entry.key(),
+                            entry.get(),
+                            tool_source
+                        );
+                    }
+                }
+                btree_map::Entry::Vacant(entry) => {
+                    entry.insert(tool_source);
+                }
+            }
         }
 
         for (host_name, host_source) in other.hosts {
@@ -379,6 +394,28 @@ mod test {
 
     fn version(string: &str) -> VersionReq {
         VersionReq::parse(string).unwrap()
+    }
+
+    #[test]
+    fn duplicate_tool_definitions_keep_the_first_one() {
+        let mut first = BTreeMap::new();
+        first.insert(
+            "tool_alias".to_owned(),
+            new_github("user/repo", version("0.1.0")),
+        );
+        let mut second = BTreeMap::new();
+        second.insert(
+            "tool_alias".to_owned(),
+            new_github("user/other-repo", version("2.0.0")),
+        );
+
+        let mut config = new_config(first.clone(), HashMap::new());
+        config.fill_from(ConfigFile {
+            tools: second,
+            hosts: HashMap::new(),
+        });
+
+        assert_eq!(config.tools, first);
     }
 
     fn new_host(source: Url, protocol: Protocol) -> Host {
