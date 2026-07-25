@@ -153,13 +153,16 @@ impl ToolCache {
                     format!("unable to open zip archive ({})", err),
                 )
             })?;
-            let mut file = archive.by_index(0).map_err(|err| {
+            let file_names: Vec<String> = archive.file_names().map(str::to_owned).collect();
+            let file_index = choose_zip_file(&file_names, tool.path());
+            let mut file = archive.by_index(file_index).map_err(|err| {
                 ForemanError::invalid_release_asset(
                     tool,
                     version,
                     format!("unable to obtain file from zip archive ({})", err),
                 )
             })?;
+            log::trace!("Picked artifact file {}", file.name());
 
             let tool_path = self.get_tool_exe_path(tool, version);
 
@@ -224,6 +227,59 @@ pub struct ToolEntry {
     pub versions: BTreeSet<Version>,
 }
 
+/// Choose the file in the release archive that is most likely the tool
+/// executable: releases may also contain files like licenses or readmes,
+/// and the executable is not necessarily the first entry (#97).
+fn choose_zip_file(file_names: &[String], tool_path: &str) -> usize {
+    let base_name = |name: &str| {
+        name.trim_end_matches('/')
+            .rsplit(['/', '\\'])
+            .next()
+            .unwrap_or(name)
+            .to_lowercase()
+    };
+    let is_dir = |name: &str| name.ends_with('/');
+
+    // an entry named after the tool wins, e.g. `asphalt` or `asphalt.exe`
+    // for the tool `jackTabsCode/asphalt`
+    let tool_name = base_name(tool_path.rsplit(['/', '\\']).next().unwrap_or(tool_path));
+    if let Some(index) = file_names.iter().position(|name| {
+        !is_dir(name) && {
+            let base = base_name(name);
+            base == tool_name || base == format!("{}{}", tool_name, EXE_SUFFIX)
+        }
+    }) {
+        return index;
+    }
+
+    // otherwise, the first entry that does not look like documentation
+    let looks_like_documentation = |name: &str| {
+        let base = base_name(name);
+        [
+            "license",
+            "licence",
+            "copying",
+            "notice",
+            "readme",
+            "changelog",
+        ]
+        .iter()
+        .any(|prefix| base.starts_with(prefix))
+            || [".md", ".txt", ".rst", ".html", ".pdf"]
+                .iter()
+                .any(|extension| base.ends_with(extension))
+    };
+    if let Some(index) = file_names
+        .iter()
+        .position(|name| !is_dir(name) && !looks_like_documentation(name))
+    {
+        return index;
+    }
+
+    // fall back to the previous behavior
+    0
+}
+
 fn tool_identifier_to_exe_name(tool: &ToolSpec, version: &Version) -> String {
     let mut name = format!("{}-{}{}", tool.cache_key().0, version, EXE_SUFFIX);
     name = name.replace('/', "__");
@@ -237,6 +293,40 @@ mod test {
     use crate::tool_provider::ReleaseAsset;
 
     use super::*;
+
+    // Regression test for #97: the executable is not necessarily the first
+    // entry of the release archive
+    #[test]
+    fn choose_zip_file_prefers_the_tool_name() {
+        let names = |names: &[&str]| names.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+
+        // the release that surfaced #97 contained a license before the binary
+        let asphalt = names(&["LICENSE.md", "README.md", "asphalt"]);
+        assert_eq!(choose_zip_file(&asphalt, "jackTabsCode/asphalt"), 2);
+
+        // Windows executables carry the .exe suffix
+        #[cfg(windows)]
+        {
+            let windows = names(&["LICENSE", "asphalt.exe"]);
+            assert_eq!(choose_zip_file(&windows, "jackTabsCode/asphalt"), 1);
+        }
+
+        // matching is case-insensitive and ignores directories in the archive
+        let nested = names(&["asphalt-1.0/", "asphalt-1.0/LICENSE", "asphalt-1.0/Asphalt"]);
+        assert_eq!(choose_zip_file(&nested, "jackTabsCode/asphalt"), 2);
+
+        // without a name match, documentation files are skipped
+        let renamed = names(&["LICENSE.txt", "readme.md", "tool-x86_64-linux"]);
+        assert_eq!(choose_zip_file(&renamed, "user/tool"), 2);
+
+        // single-entry archives keep working like before
+        let single = names(&["rojo"]);
+        assert_eq!(choose_zip_file(&single, "rojo-rbx/rojo"), 0);
+
+        // if everything looks like documentation, fall back to the first entry
+        let odd = names(&["README.md", "LICENSE"]);
+        assert_eq!(choose_zip_file(&odd, "user/tool"), 0);
+    }
 
     // Regression test for LUAFDN-1041, based on the release that surfaced it
     #[test]
