@@ -50,8 +50,6 @@ impl ToolProviderImpl for ArtifactoryProvider {
 
         let url = format!("{}artifactory/api/storage/{}", host, repo);
 
-        // An exact version pin only needs the files in that version's folder. Artifactory can
-        // serve folder info anonymously while requiring authentication to list a whole repo.
         let file_uris = if let Some(version) = exact_version(version_req) {
             log::debug!("Downloading artifactory release {} for {}", version, repo);
             list_exact_release_files(&get, &url, &version)?

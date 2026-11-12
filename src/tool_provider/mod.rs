@@ -11,7 +11,6 @@ use std::{collections::HashMap, fmt};
 use url::Url;
 
 pub trait ToolProviderImpl: fmt::Debug {
-    /// Lists releases of `repo`. Providers may use `version_req` to avoid listing releases that can't match.
     fn get_releases(
         &self,
         repo: &str,
