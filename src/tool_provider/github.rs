@@ -12,6 +12,7 @@ use crate::{
     error::{ForemanError, ForemanResult},
     paths::ForemanPaths,
 };
+use semver::VersionReq;
 use url::Url;
 
 /// Parses the GitHub `Link` header to extract the "next" page URL.
@@ -49,7 +50,12 @@ impl GithubProvider {
 }
 
 impl ToolProviderImpl for GithubProvider {
-    fn get_releases(&self, repo: &str, _host: &Url) -> ForemanResult<Vec<Release>> {
+    fn get_releases(
+        &self,
+        repo: &str,
+        _host: &Url,
+        _version_req: &VersionReq,
+    ) -> ForemanResult<Vec<Release>> {
         let client = Client::new();
         let auth_store = AuthStore::load(&self.paths.auth_store())?;
 

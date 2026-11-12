@@ -12,6 +12,7 @@ use crate::{
     error::{ForemanError, ForemanResult},
     paths::ForemanPaths,
 };
+use semver::VersionReq;
 use url::Url;
 
 #[derive(Debug, Default)]
@@ -26,7 +27,12 @@ impl GitlabProvider {
 }
 
 impl ToolProviderImpl for GitlabProvider {
-    fn get_releases(&self, repo: &str, _host: &Url) -> ForemanResult<Vec<Release>> {
+    fn get_releases(
+        &self,
+        repo: &str,
+        _host: &Url,
+        _version_req: &VersionReq,
+    ) -> ForemanResult<Vec<Release>> {
         let client = Client::new();
 
         let url = format!(

@@ -6,11 +6,17 @@ use crate::{error::ForemanResult, paths::ForemanPaths};
 use artifactory::ArtifactoryProvider;
 use github::GithubProvider;
 use gitlab::GitlabProvider;
+use semver::VersionReq;
 use std::{collections::HashMap, fmt};
 use url::Url;
 
 pub trait ToolProviderImpl: fmt::Debug {
-    fn get_releases(&self, repo: &str, host: &Url) -> ForemanResult<Vec<Release>>;
+    fn get_releases(
+        &self,
+        repo: &str,
+        host: &Url,
+        version_req: &VersionReq,
+    ) -> ForemanResult<Vec<Release>>;
 
     fn download_asset(&self, url: &str) -> ForemanResult<Vec<u8>>;
 }
