@@ -88,7 +88,9 @@ impl ToolCache {
                 .find(|version| tool.version().matches(version));
 
             if let Some(version) = matching_version {
-                return Ok(version.clone());
+                if self.get_tool_exe_path(tool, version).exists() {
+                    return Ok(version.clone());
+                }
             }
         }
 
@@ -225,9 +227,8 @@ pub struct ToolEntry {
 }
 
 fn tool_identifier_to_exe_name(tool: &ToolSpec, version: &Version) -> String {
-    let mut name = format!("{}-{}{}", tool.cache_key().0, version, EXE_SUFFIX);
-    name = name.replace('/', "__");
-    name.replace('\\', "__")
+    let name = format!("{}-{}{}", tool.cache_key().0, version, EXE_SUFFIX);
+    name.replace(['/', '\\', ':', '*', '?', '"', '<', '>', '|'], "__")
 }
 
 #[cfg(test)]
@@ -237,6 +238,33 @@ mod test {
     use crate::tool_provider::ReleaseAsset;
 
     use super::*;
+
+    #[test]
+    fn artifactory_exe_name_is_valid_on_windows() {
+        use crate::config::{Host, Protocol};
+        use std::collections::HashMap;
+
+        let hosts = HashMap::from([(
+            "artifactory".to_string(),
+            Host::new(
+                url::Url::parse("https://artifactory.rbx.com").unwrap(),
+                Protocol::Artifactory,
+            ),
+        )]);
+        let value: toml::Value = toml::from_str(
+            r#"artifactory = "generic-rbx-local/stylua"
+version = "=2.6.0""#,
+        )
+        .unwrap();
+        let tool = ToolSpec::from_value(&value, &hosts).unwrap();
+
+        let name = tool_identifier_to_exe_name(&tool, &Version::new(2, 6, 0));
+        assert!(
+            !name.contains([':', '/', '\\', '*', '?', '"', '<', '>', '|']),
+            "{}",
+            name
+        );
+    }
 
     // Regression test for LUAFDN-1041, based on the release that surfaced it
     #[test]
